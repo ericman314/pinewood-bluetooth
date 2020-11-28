@@ -1,70 +1,86 @@
-# Getting Started with Create React App
+# How it works
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+There are three actors in this system:
 
-## Available Scripts
+1. Web server
+2. Client browser
+3. Track and bluetooth peripheral
 
-In the project directory, you can run:
+The web server provides API endpoints to save and restore race data. It also serves the React web app. It uses Node.js, express, and MariaDB.
 
-### `npm start`
+The client browser runs a React web app that allows the user to interface with the track and manage a race. Using the client browser, the user can login, customize the event, register cars, and view results. Once the user's device connects to the track with Bluetooth, the user can also run the race and use a laptop to display live race results on a projector. The user can also plug in a webcam to enable the "instant replay" feature.
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+The track acts as a Bluetooth LE peripheral device and communicates with the client browser via the Web Bluetooth API. The track reports the following state variables: starting gate position (up or down), and time of finish line sensor crossing in each lane. These times are reset to 0 when the starting gate drops, and remain 0 until each car crosses the finish line.
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+# Web Server API
 
-### `npm test`
+- `POST /api/v4/user/login` - Login a user
+- `GET /api/v4/user/all` - List all users
+- `POST /api/v4/user/create` - Create a user
+- `POST /api/v4/user/update` - Update a user
+- `POST /api/v4/user/delete` - Delete a user
+- `GET /api/v4/event/all` - List all events
+- `POST /api/v4/event/create` - Create an event
+- `POST /api/v4/event/update` - Update an event
+- `POST /api/v4/event/delete` - Delete an event
+- `GET /api/v4/car/getByEventId` - Get cars by event id
+- `GET /api/v4/result/getByEventId` - Get results by event id
+- `POST /api/v4/result/create` - Save new result. Passing an array saves each item as a new result.
+- `POST /api/v4/result/delete` - Delete result by id
+- `GET /api/v4/car/getByEventIdWithAchievements` - Get cars by event id with achievements
+- `POST /api/v4/car/create` - Create a car and check it into an event
+- `POST /api/v4/car/update` - Update a car
+- `POST /api/v4/car/delete` - Delete a car permanently
+- `GET /api/v4/car/:id.jpg` - Get the car's image
+- `GET /api/v4/achievement/getByEventId` Get achievements by event id
+- `POST /api/v4/achievement/create` Create new achievement
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
 
-### `npm run build`
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+# Client App
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+The client app does most of the heavy lifting. Its various features include:
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## User management
 
-### `npm run eject`
+In a typical scenario, the admin will create a username/password combination for the derby event manager(s). This will allow the manager(s) to login and perform other actions.
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+Anonymous visitors may:
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+- See list of all events
+- See results from any event
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+Event managers may also:
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+- Add or remove cars from their event
+- Run their own race (as long as they are connected to the track)
 
-## Learn More
+The admin may also:
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+- Create and manage event details
+- Create and edit user details
+- Add or remove cars from any event
+- Run any race
+- Simulate running a race when not connected to the track
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## Event management
 
-### Code Splitting
+The admin may create, edit, and delete events. The admin may also assign a user as an event manager.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+## Car check-in and editing
 
-### Analyzing the Bundle Size
+The admin and event manager may add, update, and delete cars within their event--or, for admins, any event. When cars are added, they are immediately added to the race. When a car is deleted, the car is just marked as "deleted"--it is not actually removed from the database. Event managers can see deleted cars. Managers can also "defer" a car without removing it, which means it will not be assigned to any additional races, but it will still appear in the results.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+## Running a race
 
-### Making a Progressive Web App
+Managers and admins can connect to the track to run a race. (Admins can also connect to a simulated track.) 
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+When running a race, the normal interface is replaced with a full screen live interface. The web app uses the currently loaded event to assign cars to races, display the cars and results, and show the instant replay.
 
-### Advanced Configuration
+## Unmanaged race
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+When an internet connection is unreliable, or when there is no need to check-in cars or record results, admins and managers that connect to the track can run the race in "unmanaged" mode. The full screen interface will only show times and the instant replay.
 
-### Deployment
+## Automatic data updates
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+Through socket messages, the client side data is always kept up to date in the event that multiple users, or one user and an admin, are concurrently managing a race.
