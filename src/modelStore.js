@@ -16,7 +16,9 @@ const initialModel = {
 }
 
 export const primaryKeys = {
-
+  event: 'eventId',
+  car: 'carId',
+  result: 'resultId'
 }
 
 const socketClientLocation = config.webRoot
@@ -46,6 +48,7 @@ const ModelStoreProvider = ({ children }) => {
         if (state.requestQueue.find(req => req.signature === action.signature)) {
           return state
         } else {
+          console.log('Adding to request queue: ', action.signature)
           return update(state, { requestQueue: { $push: [{ signature: action.signature, endpoint: action.endpoint }] } })
         }
       }
@@ -54,8 +57,10 @@ const ModelStoreProvider = ({ children }) => {
         if (!action.signature) { throw new TypeError('action.signature is required') }
         let idx = state.requestQueue.findIndex(req => req.signature === action.signature)
         if (idx >= 0) {
+          console.log('Removing from request queue: ', action.signature)
           return update(state, { requestQueue: { $splice: [[idx, 1]] } })
         } else {
+          console.warn('Request not found in queue: ', action.signature)
           return state
         }
       }
@@ -91,7 +96,7 @@ const ModelStoreProvider = ({ children }) => {
           if (state.model[table] === undefined) {
 
             let newArray = []
-            for (let o of data.objects) {
+            for (let o of data) {
               newArray.push(o)
             }
 
@@ -101,7 +106,7 @@ const ModelStoreProvider = ({ children }) => {
             // Copy new data to state, either by updating existing object or creating new one
             let toPush = []
             let toMerge = []
-            for (let o of data.objects) {
+            for (let o of data) {
               let itemIndex = state.model[table].findIndex(el => el[primaryKey] === o[primaryKey])
               if (itemIndex < 0) {
                 toPush.push(o)
@@ -198,16 +203,18 @@ const ModelStoreProvider = ({ children }) => {
     state.requestQueue.forEach(req => {
 
       // Last chance to bail out if this request has already been made
-      if (requestsFired.current.includes(req.signature)) return
+      if (requestsFired.current.includes(req.signature)) {
+        dispatch({ type: 'dequeueRequest', signature: req.signature })
+        return
+      }
 
       // Make the request
       requestsFired.current.push(req.signature)
       dispatch({ type: 'setSignatureStatus', signature: req.signature, status: 'pending' })
       dispatch({ type: 'subscribe', table: req.endpoint.table })
-      dispatch({ type: 'dequeueRequest', signature: req.signature })
 
       req.endpoint.execute().then(response => {
-        dispatch({ type: 'setModel', table: req.endpoint.table, data: response })
+        dispatch({ type: 'updateModel', table: req.endpoint.table, data: response })
         dispatch({ type: 'setSignatureStatus', signature: req.signature, status: 'complete' })
       })
       // TODO: Error handling

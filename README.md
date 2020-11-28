@@ -1,9 +1,13 @@
+# pinewood-bluetooth
+
+Client web app for the pinewood derby track setup.
+
 # How it works
 
-There are three actors in this system:
+There are three parts to the complete pinewood derby track setup:
 
 1. Web server
-2. Client browser
+2. Client web app (this repository)
 3. Track and bluetooth peripheral
 
 The web server provides API endpoints to save and restore race data. It also serves the React web app. It uses Node.js, express, and MariaDB.
@@ -13,6 +17,8 @@ The client browser runs a React web app that allows the user to interface with t
 The track acts as a Bluetooth LE peripheral device and communicates with the client browser via the Web Bluetooth API. The track reports the following state variables: starting gate position (up or down), and time of finish line sensor crossing in each lane. These times are reset to 0 when the starting gate drops, and remain 0 until each car crosses the finish line.
 
 # Web Server API
+
+Included here for reference. Docs will be in the uvpd-v4 repo (eventually).
 
 - `POST /api/v4/user/login` - Login a user
 - `GET /api/v4/user/all` - List all users

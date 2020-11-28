@@ -50,6 +50,10 @@ export function useModel(endpoint) {
   if (state.signatureStatus[signature] === 'complete') {
     // Use the filter function to return the appropriate data
     if (endpoint.filter) {
+      console.log('Applying filter to ', state.model[endpoint.table])
+      let filtered = endpoint.filter(state.model[endpoint.table])
+      console.log(endpoint.filter)
+      console.log('Result is ', filtered)
       return endpoint.filter(state.model[endpoint.table])
     } else {
       return state.model[endpoint.table].slice()
@@ -75,10 +79,28 @@ export function useModel(endpoint) {
 export const api = {
 
   events: {
-    all: (params) => ({
-      params,
+    all: () => ({
+      params: {},
       table: 'event',
-      execute: () => fetchGet('/api/v4/event/all', params)
+      execute: () => fetchGet('/api/v4/event/all')
+    })
+  },
+
+  cars: {
+    getByEventId: (eventId) => ({
+      params: { eventId },
+      table: 'car',
+      execute: () => fetchGet('/api/v4/car/getByEventId', { eventId }),
+      filter: (cars) => { console.log(eventId, cars); return cars.filter(car => { console.log(+eventId); console.log(car); return car.eventId === eventId }) }
+    })
+  },
+
+  results: {
+    getByEventId: (eventId) => ({
+      params: { eventId },
+      table: 'result',
+      execute: () => fetchGet('/api/v4/result/getByEventId', { eventId }),
+      filter: (results) => results.filter(result => result.eventId === eventId)
     })
   },
 
