@@ -4,12 +4,15 @@ import { BrowserRouter } from 'react-router-dom'
 import './index.css'
 import App from './components/App'
 import { ModelStoreProvider } from './modelStore'
+import { AppStateProvider } from './useAppState'
 
 ReactDOM.render(
   <BrowserRouter>
-    <ModelStoreProvider>
-      <App />
-    </ModelStoreProvider>
+    <AppStateProvider>
+      <ModelStoreProvider>
+        <App />
+      </ModelStoreProvider>
+    </AppStateProvider>
   </BrowserRouter>
   ,
   document.getElementById('root')

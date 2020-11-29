@@ -5,7 +5,7 @@ const config = {
 
 switch (process.env.NODE_ENV) {
   case 'development':
-    config.webRoot = 'http://localhost:3000'
+    config.webRoot = ''
     config.basename = '/'
     break
   default:

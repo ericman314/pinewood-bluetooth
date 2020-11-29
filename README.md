@@ -21,6 +21,7 @@ The track acts as a Bluetooth LE peripheral device and communicates with the cli
 Included here for reference. Docs will be in the uvpd-v4 repo (eventually).
 
 - `POST /api/v4/user/login` - Login a user
+- `GET /api/v4/user/verify` - Verify a token and retrieve user information
 - `GET /api/v4/user/all` - List all users
 - `POST /api/v4/user/create` - Create a user
 - `POST /api/v4/user/update` - Update a user

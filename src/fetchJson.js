@@ -12,6 +12,11 @@ export async function fetchGet(url, data = {}, rootURL = null, headers = {}, abo
   }
 
   let opts = { headers: { ...headers } }
+  let token = localStorage.getItem('uvpd-jwt-token')
+  if (token) {
+    opts.headers.Authorization = `Bearer ${token}`
+  }
+
   if (abortController && abortController.signal) {
     opts.signal = abortController.signal
   }
@@ -47,6 +52,11 @@ export async function fetchPost(url, data = {}, rootURL = null, headers = {}, ab
     ...headers
   }
 
+  let token = localStorage.getItem('uvpd-jwt-token')
+  if (token) {
+    headers.Authorization = `Bearer ${token}`
+  }
+
   let opts = {
     method: 'POST',
     headers,
@@ -56,7 +66,14 @@ export async function fetchPost(url, data = {}, rootURL = null, headers = {}, ab
     opts.signal = abortController.signal
   }
 
-  const response = await fetch(fullUrl, opts)
+  let response
+  try {
+    response = await fetch(fullUrl, opts)
+  } catch (ex) {
+    alert(ex.message)
+    console.error(ex)
+    return
+  }
 
   if (!response.ok) {
     throw new FetchError(`Received status code ${response.status} from GET request to ${fullUrl}.`, null, response.status, fullUrl, 'post', data)

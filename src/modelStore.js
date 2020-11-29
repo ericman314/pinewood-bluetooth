@@ -10,7 +10,6 @@ const initialModel = {
   model: {},
   subscribedTables: [],
   cacheStatus: {},
-  token: null,
   socketConnected: false,
   requestQueue: []
 }
@@ -22,8 +21,8 @@ export const primaryKeys = {
 }
 
 const socketClientLocation = config.webRoot
-const socket = socketIOClient(socketClientLocation)
-
+// const socket = socketIOClient(socketClientLocation)
+let socket
 
 
 /** A React context for storing our model */
@@ -137,11 +136,6 @@ const ModelStoreProvider = ({ children }) => {
         }
       }
 
-      case 'setToken': {
-        if (!action.token) { throw new TypeError('action.token is required') }
-        return update(state, { token: { $set: action.token } })
-      }
-
       case 'socketConnect': {
         return update(state, { socketConnected: { $set: true } })
       }
@@ -226,11 +220,11 @@ const ModelStoreProvider = ({ children }) => {
 
     (async () => {
 
-      if (state.token && state.socketConnected && state.subscribedTables.length > 0) {
+      if (state.socketConnected && state.subscribedTables.length > 0) {
 
-        console.log('In modelStore, token is set, socket is connected, and subscribedTables has items:', state.subscribedTables)
+        console.log('In modelStore, socket is connected, and subscribedTables has items:', state.subscribedTables)
 
-        let result = await fetchPost('/api/v1/auth_socket', { socket_id: socket.id, models: state.subscribedTables, token: state.token })
+        let result = await fetchPost('/api/v1/auth_socket', { socket_id: socket.id, models: state.subscribedTables })
         if (result.error) {
           console.error(result.error)
         }
@@ -261,7 +255,7 @@ const ModelStoreProvider = ({ children }) => {
 
 
 
-  }, [state.subscribedTables, state.token, state.socketConnected])
+  }, [state.subscribedTables, state.socketConnected])
 
   function dispatchData(obj, deleted) {
     console.log('dispatchData', obj, deleted)
@@ -276,6 +270,7 @@ const ModelStoreProvider = ({ children }) => {
   }
 
   React.useEffect(() => {
+    return
 
     console.log('Turning on socket listeners')
     socket.on('connect', async function () {

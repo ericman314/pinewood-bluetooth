@@ -78,6 +78,16 @@ export function useModel(endpoint) {
  */
 export const api = {
 
+  user: {
+    login: (username, password) => ({
+      execute: () => fetchPost('/api/v4/user/login', { username, password })
+    }),
+
+    verify: () => ({
+      execute: () => fetchGet('/api/v4/user/verify')
+    })
+  },
+
   events: {
     all: () => ({
       params: {},
@@ -110,8 +120,9 @@ export const api = {
     /**
      * Retrieves orders for a customer.
      * @param {Object} params - The parameters to pass to the API endpoint.
-     * @param {string} params.customer_id - The customer id.
-     * @param {string} params.token - The authentication token.
+    * @param {
+    string
+  } params.customer_id - The customer id.
      */
     get_for_customer: (params) => ({
       /** This tells useModel to subscribe to a particular table for socket updates, and specifies where to store the data returned from execute() in our local data model. */
@@ -131,7 +142,6 @@ export const api = {
      * Retrieves an order by id.
      * @param {Object} params - The parameters to pass to the API endpoint.
      * @param {string} params.id - The order id.
-     * @param {string} params.token - The authentication token.
      */
     get: (params) => ({
       /** This tells useModel to subscribe to a particular table for socket updates, and specifies where to store the data returned from execute() in our local data model. */
@@ -153,7 +163,6 @@ export const api = {
     /**
      * Updates an order.
      * @param {Object} params - The updated order.
-     * @param {string} params.token - The authentication token.
      */
     update: (params) => ({
       execute: () => fetchPost('/api/v1/order/update', params)
