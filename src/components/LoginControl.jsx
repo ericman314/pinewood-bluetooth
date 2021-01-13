@@ -1,4 +1,4 @@
-import { Button, Dialog, FormControl, IconButton, Input, InputAdornment, InputLabel, OutlinedInput, TextField } from '@material-ui/core'
+import { Button, Dialog, FormControl, IconButton, Input, InputAdornment, InputLabel, makeStyles, OutlinedInput, TextField } from '@material-ui/core'
 import React from 'react'
 import './css/LoginControl.css'
 import { fetchPost } from '../fetchJson'
@@ -6,8 +6,20 @@ import Visibility from '@material-ui/icons/Visibility'
 import VisibilityOff from '@material-ui/icons/VisibilityOff'
 import { api } from '../useModel'
 
+const useStyles = makeStyles((theme) => ({
+  button: {
+    ...theme.typography.button,
+    color: '#ccc',
+    // backgroundColor: theme.palette.background.paper,
+    display: 'inline-block',
+    cursor: 'pointer',
+    padding: theme.spacing(1),
+  },
+}))
+
 export function LoginControl(props) {
 
+  const classes = useStyles()
   const [username, setUsername] = React.useState('')
   const [password, setPassword] = React.useState('')
   const [showPassword, setShowPassword] = React.useState(false)
@@ -25,8 +37,9 @@ export function LoginControl(props) {
 
     let data
     try {
-      data = await api.user.login(username, password).execute()
+      data = await api.users.login(username, password).execute()
     } catch (ex) {
+      console.error(ex)
       setErrorMessage(ex.serverMessage ?? ex.message ?? ex.toString())
       return
     }
@@ -55,7 +68,7 @@ export function LoginControl(props) {
 
       {props.user ?
         <>
-          <div onClick={() => setIsOpen(true)}>{props.user.username}</div>
+          <div className={classes.button} onClick={() => setIsOpen(true)}>Logout</div>
           <Dialog open={isOpen} onClose={handleClose}>
             {props.user.username}
             <Button onClick={handleLogout}>Logout</Button>
@@ -63,7 +76,8 @@ export function LoginControl(props) {
         </>
         :
         <>
-          <div onClick={() => setIsOpen(true)}>Login</div>
+          <div className={classes.button} onClick={() => setIsOpen(true)}>Login</div>
+
           <Dialog open={isOpen} onClose={handleClose}>
             <div className='loginControlTextField'>
               <TextField

@@ -78,13 +78,31 @@ export function useModel(endpoint) {
  */
 export const api = {
 
-  user: {
+  users: {
     login: (username, password) => ({
       execute: () => fetchPost('/api/v4/user/login', { username, password })
     }),
 
     verify: () => ({
       execute: () => fetchGet('/api/v4/user/verify')
+    }),
+
+    all: () => ({
+      params: {},
+      table: 'user',
+      execute: () => fetchGet('/api/v4/user/all')
+    }),
+
+    update: (user) => ({
+      execute: () => fetchPost('/api/v4/user/update', user)
+    }),
+
+    create: (user) => ({
+      execute: () => fetchPost('/api/v4/user/create', user)
+    }),
+
+    delete: (userId) => ({
+      execute: () => fetchPost('/api/v4/user/delete', { userId })
     })
   },
 

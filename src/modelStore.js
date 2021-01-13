@@ -17,7 +17,8 @@ const initialModel = {
 export const primaryKeys = {
   event: 'eventId',
   car: 'carId',
-  result: 'resultId'
+  result: 'resultId',
+  user: 'userId'
 }
 
 const socketClientLocation = config.webRoot

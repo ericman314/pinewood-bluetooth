@@ -1,3 +1,7 @@
+.LoginView {
+  float: right;
+}
+
 .loginControlTextField {
   margin: 16px;
 }

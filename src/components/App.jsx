@@ -11,9 +11,22 @@ import { modelStore } from '../modelStore'
 import { LoginControl } from './LoginControl'
 import constants from '../constants'
 import { api } from '../useModel'
+import { makeStyles } from '@material-ui/core'
+import { UsersView } from './UsersView'
+
+const useStyles = makeStyles((theme) => ({
+  button: {
+    ...theme.typography.button,
+    color: '#ccc',
+    // backgroundColor: theme.palette.background.paper,
+    display: 'inline-block',
+    padding: theme.spacing(1),
+  },
+}))
 
 function App() {
 
+  const classes = useStyles()
   const { state, dispatch } = useAppState()
 
   React.useEffect(() => {
@@ -21,7 +34,7 @@ function App() {
     (async () => {
       let token = localStorage.getItem('uvpd-jwt-token')
       if (token) {
-        const data = await api.user.verify().execute()
+        const data = await api.users.verify().execute()
         if (data.user) {
           loginSuccess(token, data.user)
         }
@@ -45,17 +58,21 @@ function App() {
   return (
     <div className="App">
       <div className='header'>
+        <LoginControl loginSuccess={loginSuccess} logout={logout} user={state.user} />
+        <Link to='/'><div style={{ float: 'right' }}><div className={classes.button}>Home</div></div></Link>
         <Link to='/'>
           <img src={logoColorFlat} />
         </Link>
       </div>
-      <LoginControl loginSuccess={loginSuccess} logout={logout} user={state.user} />
       <Switch>
         <Route path='/event-details/:eventId'>
           <EventDetailsViewWrapper />
         </Route>
         <Route path='/events-list'>
           <EventsListView />
+        </Route>
+        <Route path='/users'>
+          <UsersView />
         </Route>
         <Route path='/'>
           <HomeView />
