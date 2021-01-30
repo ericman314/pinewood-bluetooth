@@ -12,14 +12,16 @@ export function HomeView(props) {
   const [lane2, setLane2] = React.useState()
   const [lane3, setLane3] = React.useState()
   const [lane4, setLane4] = React.useState()
-  const [startGate, setStartGate] = React.useState()
+  const [status, setStatus] = React.useState()
+  const [pinState, setPinState] = React.useState()
 
 
   const refCharLane1 = React.useRef()
   const refCharLane2 = React.useRef()
   const refCharLane3 = React.useRef()
   const refCharLane4 = React.useRef()
-  const refCharStartGate = React.useRef()
+  const refCharStatus = React.useRef()
+  const refCharPinState = React.useRef()
 
   async function handleConnectTrackClick() {
 
@@ -44,25 +46,29 @@ export function HomeView(props) {
       refCharLane2.current = await service.getCharacteristic('ca3a80e2-c454-4fcb-b3cd-94070115afb2')
       refCharLane3.current = await service.getCharacteristic('ca3a80e3-c454-4fcb-b3cd-94070115afb2')
       refCharLane4.current = await service.getCharacteristic('ca3a80e4-c454-4fcb-b3cd-94070115afb2')
-      refCharStartGate.current = await service.getCharacteristic('ca3a80e5-c454-4fcb-b3cd-94070115afb2')
+      refCharStatus.current = await service.getCharacteristic('ca3a80e5-c454-4fcb-b3cd-94070115afb2')
+      refCharPinState.current = await service.getCharacteristic('ca3a80e6-c454-4fcb-b3cd-94070115afb2')
 
       refCharLane1.current.startNotifications()
       refCharLane2.current.startNotifications()
       refCharLane3.current.startNotifications()
       refCharLane4.current.startNotifications()
-      refCharStartGate.current.startNotifications()
+      refCharStatus.current.startNotifications()
+      refCharPinState.current.startNotifications()
 
       refCharLane1.current.addEventListener('characteristicvaluechanged', evt => { console.log(evt); setLane1(evt.target.value.getUint32(0, true)) })
       refCharLane2.current.addEventListener('characteristicvaluechanged', evt => { console.log(evt); setLane2(evt.target.value.getUint32(0, true)) })
       refCharLane3.current.addEventListener('characteristicvaluechanged', evt => { console.log(evt); setLane3(evt.target.value.getUint32(0, true)) })
       refCharLane4.current.addEventListener('characteristicvaluechanged', evt => { console.log(evt); setLane4(evt.target.value.getUint32(0, true)) })
-      refCharStartGate.current.addEventListener('characteristicvaluechanged', evt => { console.log(evt); setStartGate(evt.target.value.getUint8(0)) })
+      refCharStatus.current.addEventListener('characteristicvaluechanged', evt => { console.log(evt); setStatus(evt.target.value.getUint8(0)) })
+      refCharPinState.current.addEventListener('characteristicvaluechanged', evt => { console.log(evt); setPinState(evt.target.value.getUint8(0)) })
 
       refCharLane1.current.readValue().then(val => setLane1(val.getUint32(0, true)))
       refCharLane2.current.readValue().then(val => setLane2(val.getUint32(0, true)))
       refCharLane3.current.readValue().then(val => setLane3(val.getUint32(0, true)))
       refCharLane4.current.readValue().then(val => setLane4(val.getUint32(0, true)))
-      refCharStartGate.current.readValue().then(val => setStartGate(val.getUint8(0)))
+      refCharStatus.current.readValue().then(val => setStatus(val.getUint8(0)))
+      refCharPinState.current.readValue().then(val => setPinState(val.getUint8(0)))
 
 
       // console.log(characteristic)
@@ -81,7 +87,7 @@ export function HomeView(props) {
 
   async function handleStartingGate(val) {
     let value = Uint8Array.of(val)
-    let result = await refCharStartGate.current.writeValue(value)
+    let result = await refCharStatus.current.writeValue(value)
   }
 
   async function handleLane(lane, val) {
@@ -108,18 +114,21 @@ export function HomeView(props) {
       </Grid>
 
       <button onClick={handleConnectTrackClick}>Connect to Track</button>
+      {/* <br /> */}
+      {/* {!status && <button onClick={() => handleStartingGate(1)}>Release starting gate</button>} */}
+      {/* {!!status && <button onClick={() => handleStartingGate(0)}>Raise starting gate</button>} */}
       <br />
-      {!startGate && <button onClick={() => handleStartingGate(1)}>Release starting gate</button>}
-      {!!startGate && <button onClick={() => handleStartingGate(0)}>Raise starting gate</button>}
+      Lane 1 <input value={lane1} readonly />
       <br />
-      Lane 1 <input value={lane1} onChange={evt => handleLane(1, parseInt(evt.target.value))} />
+      Lane 2 <input value={lane2} readonly />
       <br />
-      Lane 2 <input value={lane2} onChange={evt => handleLane(2, parseInt(evt.target.value))} />
+      Lane 3 <input value={lane3} readonly />
       <br />
-      Lane 3 <input value={lane3} onChange={evt => handleLane(3, parseInt(evt.target.value))} />
+      Lane 4 <input value={lane4} readonly />
       <br />
-      Lane 4 <input value={lane4} onChange={evt => handleLane(4, parseInt(evt.target.value))} />
-
+      Status <input value={status} readonly />
+      <br />
+      Pin state <input value={pinState} readonly />
 
 
     </div>
