@@ -9,6 +9,7 @@ BLEUnsignedLongCharacteristic lane3Char("ca3a80e3-c454-4fcb-b3cd-94070115afb2", 
 BLEUnsignedLongCharacteristic lane4Char("ca3a80e4-c454-4fcb-b3cd-94070115afb2", BLERead | BLENotify | BLEWrite);
 BLEByteCharacteristic statusChar("ca3a80e5-c454-4fcb-b3cd-94070115afb2", BLERead | BLENotify | BLEWrite);
 BLEByteCharacteristic pinStateChar("ca3a80e6-c454-4fcb-b3cd-94070115afb2", BLERead | BLENotify | BLEWrite);
+BLEUnsignedLongCharacteristic fpsChar("ca3a80e7-c454-4fcb-b3cd-94070115afb2", BLERead | BLENotify | BLEWrite);
 
 int pins[] = {3, 2, 4, 5};
 int pinState[] = {0, 0, 0, 0};
@@ -49,7 +50,8 @@ void setup() {
   }
 
    // set the local name peripheral advertises
-  BLE.setLocalName("Pinewood Derby Track");
+  BLE.setLocalName("PinewoodDerbyTrack");
+  BLE.setDeviceName("PinewoodDerbyTrack");
   // set the UUID for the service this peripheral advertises:
   BLE.setAdvertisedService(ledService);
 
@@ -60,6 +62,7 @@ void setup() {
   ledService.addCharacteristic(lane4Char);
   ledService.addCharacteristic(statusChar);  
   ledService.addCharacteristic(pinStateChar);
+  ledService.addCharacteristic(fpsChar);
 
   // add the service
   BLE.addService(ledService);
@@ -71,6 +74,7 @@ void setup() {
   lane4Char.writeValue(0);
   statusChar.writeValue(0);
   pinStateChar.writeValue(state);
+  fpsChar.writeValue(0);
     
   // start advertising
   BLE.advertise();
@@ -84,10 +88,21 @@ int startSensorLast = 1;
 int startSensorHoldLast = 1;
 unsigned long tStartSensor = 0;
 
+unsigned long count = 0;
+long lastSecond = 0;
+
 void loop() {
   
   // poll for BLE events
   BLE.poll();
+  
+  count++;
+  if (millis() / 1000 > lastSecond) {
+    lastSecond = millis() / 1000;
+    Serial.println(count);
+    fpsChar.writeValue(count);
+    count = 0;
+  }
 
   unsigned long t = micros();
 

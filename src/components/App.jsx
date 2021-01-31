@@ -13,6 +13,7 @@ import constants from '../constants'
 import { api } from '../useModel'
 import { makeStyles } from '@material-ui/core'
 import { UsersView } from './UsersView'
+import { Race } from './Race'
 
 const useStyles = makeStyles((theme) => ({
   button: {
@@ -70,6 +71,9 @@ function App() {
         </Route>
         <Route path='/events-list'>
           <EventsListView />
+        </Route>
+        <Route path='/race-unmanaged'>
+          <Race />
         </Route>
         <Route path='/users'>
           <UsersView />
