@@ -1,10 +1,15 @@
 import React from 'react'
 
-export function useBluetooth({
-  onDataChanged = () => { },
-  onConnect = () => { },
-  onDisconnect = () => { }
-} = {}) {
+
+/** A React context for storing the bluetooth state */
+const context = React.createContext()
+
+// function getBluetooth({
+//   onDataChanged = () => { },
+//   onConnect = () => { },
+//   onDisconnect = () => { }
+// } = {}) {
+export function BluetoothProvider({ children }) {
 
   const [connected, setConnected] = React.useState(false)
   const [connecting, setConnecting] = React.useState(false)
@@ -14,8 +19,12 @@ export function useBluetooth({
   const [lane3, setLane3] = React.useState()
   const [lane4, setLane4] = React.useState()
   const [status, setStatus] = React.useState()
-  const [pinState, setPinState] = React.useState()
+  const [pinStateBin, setPinStateBin] = React.useState()
   const [fps, setFps] = React.useState()
+
+  const onDataChanged = () => { }
+  const onConnect = () => { }
+  const onDisconnect = () => { }
 
   async function connect() {
     setConnecting(true)
@@ -85,7 +94,7 @@ export function useBluetooth({
       })
       refCharPinState.addEventListener('characteristicvaluechanged', evt => {
         let val = evt.target.value.getUint8(0)
-        setPinState(val)
+        setPinStateBin(val)
         onDataChanged('pinState', val)
       })
 
@@ -100,7 +109,7 @@ export function useBluetooth({
       refCharLane3.readValue().then(val => setLane3(val.getUint32(0, true)))
       refCharLane4.readValue().then(val => setLane4(val.getUint32(0, true)))
       refCharStatus.readValue().then(val => setStatus(val.getUint8(0)))
-      refCharPinState.readValue().then(val => setPinState(val.getUint8(0)))
+      refCharPinState.readValue().then(val => setPinStateBin(val.getUint8(0)))
       refCharFps.readValue().then(val => setFps(val.getUint32(0, true)))
 
       console.log('Connection established')
@@ -115,10 +124,23 @@ export function useBluetooth({
 
   }
 
-  return {
-    connect,
-    connected,
-    connecting,
-    data: connected ? { lane1, lane2, lane3, lane4, status, pinState, fps } : {}
-  }
+  // Begin at index 1
+  const lane = [, lane1, lane2, lane3, lane4]
+  const pinStates = [, pinStateBin & 0x01, pinStateBin & 0x02, pinStateBin & 0x04, pinStateBin & 0x08]
+
+  return <context.Provider
+    value={{
+      connect,
+      connected,
+      connecting,
+      data: connected ? { lane, status, pinStates, fps } : {}
+    }}>{children}
+  </context.Provider>
+}
+
+export function useBluetooth() {
+  return React.useContext(context)
+  // if (!context.state || !context.dispatch) {
+  //   throw new Error('There must be an enclosing BluetoothProvider to use useBluetooth.')
+  // }
 }

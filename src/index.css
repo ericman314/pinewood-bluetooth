@@ -6,7 +6,6 @@ body {
   font-family: Roboto;
 }
 
-
 .header img {
   margin: 16px;
   height: 80px;
@@ -19,11 +18,10 @@ body {
   }
 }
 
-
-
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
+
 /* 
 @font-face {
   font-family: 'Lato';
@@ -53,7 +51,6 @@ body, html {
   background: #f7f0e0;
 }
 
-
 .bigbig {
   font-size: 300%;
 }
@@ -72,7 +69,6 @@ body.home {
 
 .header {
   /*background: #44332d;*/
- 
   /* text-align: center; */
   background-image: url("./components/img/background-header.jpg");
   font-size: 12pt;
@@ -127,7 +123,7 @@ img {
 }
 
 a {
-  color:inherit;
+  color: inherit;
   text-decoration: none;
 }
 
@@ -702,4 +698,8 @@ div.standing-time {
 
 .welcome h1 {
   font-size: 36pt;
+}
+
+.dialog-actions-centered {
+      justify-content: center !important;
 }

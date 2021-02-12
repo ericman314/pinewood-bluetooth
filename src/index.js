@@ -5,12 +5,15 @@ import './index.css'
 import App from './components/App'
 import { ModelStoreProvider } from './modelStore'
 import { AppStateProvider } from './useAppState'
+import { BluetoothProvider } from './hooks/useBluetooth'
 
 ReactDOM.render(
   <BrowserRouter>
     <AppStateProvider>
       <ModelStoreProvider>
-        <App />
+        <BluetoothProvider>
+          <App />
+        </BluetoothProvider>
       </ModelStoreProvider>
     </AppStateProvider>
   </BrowserRouter>
