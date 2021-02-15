@@ -1,14 +1,10 @@
+import { IsoTwoTone } from '@material-ui/icons'
 import React from 'react'
 
 
 /** A React context for storing the bluetooth state */
 const context = React.createContext()
 
-// function getBluetooth({
-//   onDataChanged = () => { },
-//   onConnect = () => { },
-//   onDisconnect = () => { }
-// } = {}) {
 export function BluetoothProvider({ children }) {
 
   const [connected, setConnected] = React.useState(false)
@@ -18,13 +14,11 @@ export function BluetoothProvider({ children }) {
   const [lane2, setLane2] = React.useState()
   const [lane3, setLane3] = React.useState()
   const [lane4, setLane4] = React.useState()
-  const [status, setStatus] = React.useState()
+  const [status, setStatus] = React.useState(1)
   const [pinStateBin, setPinStateBin] = React.useState()
   const [fps, setFps] = React.useState()
 
-  const onDataChanged = () => { }
-  const onConnect = () => { }
-  const onDisconnect = () => { }
+  const { on, removeListener, emit } = useEventEmitter()
 
   async function connect() {
     setConnecting(true)
@@ -39,7 +33,10 @@ export function BluetoothProvider({ children }) {
       console.log('Found device:')
       console.log(device)
 
-      device.addEventListener('gattserverdisconnected', evt => { setConnected(false); onDisconnect() })
+      device.addEventListener('gattserverdisconnected', evt => {
+        setConnected(false)
+        emit('disconnect')
+      })
 
       const server = await device.gatt.connect()
 
@@ -70,38 +67,38 @@ export function BluetoothProvider({ children }) {
       refCharLane1.addEventListener('characteristicvaluechanged', evt => {
         let val = evt.target.value.getUint32(0, true)
         setLane1(val)
-        onDataChanged('lane1', val)
+        emit('data', { name: 'lane1', value: val })
       })
       refCharLane2.addEventListener('characteristicvaluechanged', evt => {
         let val = evt.target.value.getUint32(0, true)
         setLane2(val)
-        onDataChanged('lane2', val)
+        emit('data', { name: 'lane2', value: val })
       })
       refCharLane3.addEventListener('characteristicvaluechanged', evt => {
         let val = evt.target.value.getUint32(0, true)
         setLane3(val)
-        onDataChanged('lane3', val)
+        emit('data', { name: 'lane3', value: val })
       })
       refCharLane4.addEventListener('characteristicvaluechanged', evt => {
         let val = evt.target.value.getUint32(0, true)
         setLane4(val)
-        onDataChanged('lane4', val)
+        emit('data', { name: 'lane4', value: val })
       })
       refCharStatus.addEventListener('characteristicvaluechanged', evt => {
         let val = evt.target.value.getUint8(0)
         setStatus(val)
-        onDataChanged('status', val)
+        emit('data', { name: 'status', value: val })
       })
       refCharPinState.addEventListener('characteristicvaluechanged', evt => {
         let val = evt.target.value.getUint8(0)
         setPinStateBin(val)
-        onDataChanged('pinState', val)
+        emit('data', { name: 'pinState', value: val })
       })
 
       refCharFps.addEventListener('characteristicvaluechanged', evt => {
         let val = evt.target.value.getUint32(0, true)
         setFps(val)
-        onDataChanged('fps', val)
+        emit('data', { name: 'fps', value: val })
       })
 
       refCharLane1.readValue().then(val => setLane1(val.getUint32(0, true)))
@@ -114,7 +111,7 @@ export function BluetoothProvider({ children }) {
 
       console.log('Connection established')
       setConnected(true)
-      onConnect()
+      emit('connect')
 
     } catch (ex) {
       console.error(ex)
@@ -125,15 +122,16 @@ export function BluetoothProvider({ children }) {
   }
 
   // Begin at index 1
-  const lane = [, lane1, lane2, lane3, lane4]
-  const pinStates = [, pinStateBin & 0x01, pinStateBin & 0x02, pinStateBin & 0x04, pinStateBin & 0x08]
+  const lanes = [lane1, lane2, lane3, lane4]
+  const pinStates = [pinStateBin & 0x01, pinStateBin & 0x02, pinStateBin & 0x04, pinStateBin & 0x08]
+  const gate = status ? 'DOWN' : 'UP'
 
   return <context.Provider
     value={{
       connect,
       connected,
       connecting,
-      data: connected ? { lane, status, pinStates, fps } : {}
+      data: connected ? { lanes, lane1, lane2, lane3, lane4, gate, pinStates, pinStateBin, fps } : {},
     }}>{children}
   </context.Provider>
 }
@@ -143,4 +141,58 @@ export function useBluetooth() {
   // if (!context.state || !context.dispatch) {
   //   throw new Error('There must be an enclosing BluetoothProvider to use useBluetooth.')
   // }
+}
+
+function useEventEmitter() {
+
+  const [events, setEvents] = React.useState({ data: [], connect: [], disconnect: [], connecting: [] })
+
+  /**
+   * Register an event listener
+   * @param {'data'|'connect'|'connecting'|'disconnect'} name 
+   * @param {function} listener 
+   */
+  function on(name, listener) {
+    if (!events[name]) {
+      setEvents({ ...events, [name]: [listener] })
+    } else {
+      setEvents({ ...events, [name]: [...events[name], listener] })
+    }
+  }
+
+  /**
+   * Remove an event listener
+   * @param {string} name 
+   * @param {function} listenerToRemove 
+   */
+  function removeListener(name, listenerToRemove) {
+    if (!events[name]) {
+      throw new Error(`Can't remove a listener. Event "${name}" doesn't exits.`)
+    }
+
+    const filterListeners = (listener) => listener !== listenerToRemove
+    setEvents({ ...events, [name]: events[name].filter(filterListeners) })
+  }
+
+  /**
+   * Remove all event listeners for the given event
+   * @param {string} name 
+   */
+  function removeAllListeners(name) {
+    setEvents({ ...events, [name]: [] })
+  }
+
+  function emit(name, data) {
+    if (!events[name]) {
+      throw new Error(`Can't emit an event. Event "${name}" doesn't exits.`)
+    }
+
+    const fireCallbacks = (callback) => {
+      callback(data)
+    }
+
+    events[name].forEach(fireCallbacks)
+  }
+
+  return { on, removeListener, emit }
 }

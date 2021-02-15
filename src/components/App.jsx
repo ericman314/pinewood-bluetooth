@@ -14,6 +14,7 @@ import { api } from '../useModel'
 import { makeStyles } from '@material-ui/core'
 import { UsersView } from './UsersView'
 import { Race } from './Race'
+import { RaceModelLoader } from './RaceModelLoader'
 
 const useStyles = makeStyles((theme) => ({
   button: {
@@ -29,6 +30,7 @@ function App() {
 
   const classes = useStyles()
   const { state, dispatch } = useAppState()
+  
 
   React.useEffect(() => {
 
@@ -73,7 +75,14 @@ function App() {
           <EventsListView />
         </Route>
         <Route path='/race-unmanaged'>
-          <Race />
+          <Race cars={[]} />
+        </Route>
+        <Route path='/race/:eventId'>
+          <RaceModelLoader>
+            {({ cars }) =>
+              <Race cars={cars} />
+            }
+          </RaceModelLoader>
         </Route>
         <Route path='/users'>
           <UsersView />

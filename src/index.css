@@ -192,6 +192,7 @@ body.x-hide-overflow {
   bottom: 0;
   right: 0;
   background: black;
+  text-align: center;
 }
 
 .fullpage {
@@ -244,6 +245,7 @@ hr {
 }
 
 .now-racing-section {
+  position:relative;
   top: 0px;
   transition: top 0.3s linear;
 }
@@ -273,6 +275,7 @@ hr {
 }
 
 .on-deck {
+  position:  relative;
   transform-origin: 0 0;
   transform: scale(0.6667);
   padding: 0;
@@ -282,7 +285,12 @@ hr {
   border: solid 1px black;
   box-shadow: 2px 2px 3px 1px rgba(0, 0, 0, 0.5);
   background: #ddd;
+
+  top: 470px;
+  transform: scale(0.9);
+  transform-origin: 50% 0;
 }
+
 
 .now-racing h1, .on-deck h1 {
   background: #37474f;
@@ -464,11 +472,6 @@ div.standing-time {
   color: #444;
 }
 
-.on-deck {
-  top: 420px;
-  transform: scale(0.9);
-  transform-origin: 50% 0;
-}
 
 .racing-next {
   position: fixed;
@@ -701,5 +704,5 @@ div.standing-time {
 }
 
 .dialog-actions-centered {
-      justify-content: center !important;
+  justify-content: center !important;
 }

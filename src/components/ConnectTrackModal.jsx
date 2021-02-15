@@ -23,7 +23,7 @@ export function ConnectTrackModal() {
             connecting ? 'Connecting, please wait...' : 'Not connected'
           )}
         </h2>
-        <p>To connect to the pinewood derby track, click "CONNECT" below. When the dialog appears, select <b>PinewoodDerbyTrack</b> in the list of devices and click pair.</p>
+        <p>Click "CONNECT" below, then select <b>PinewoodDerbyTrack</b> in the list of devices and click "Pair".</p>
 
         <DialogActions classes={{ root: 'dialog-actions-centered' }}>
           <Button color='primary' onClick={connect} disabled={connecting}>Connect</Button>

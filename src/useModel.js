@@ -111,6 +111,12 @@ export const api = {
       params: {},
       table: 'event',
       execute: () => fetchGet('/api/v4/event/all')
+    }),
+
+    getById: (eventId) => ({
+      params: { eventId },
+      table: 'event',
+      execute: () => fetchGet('/api/v4/event/get', { eventId })
     })
   },
 
@@ -120,6 +126,10 @@ export const api = {
       table: 'car',
       execute: () => fetchGet('/api/v4/car/getByEventId', { eventId }),
       filter: (cars) => { console.log(eventId, cars); return cars.filter(car => { console.log(+eventId); console.log(car); return car.eventId === eventId }) }
+    }),
+
+    update: (car) => ({
+      execute: () => fetchGet('/api/v4/car/update', { car })
     })
   },
 
