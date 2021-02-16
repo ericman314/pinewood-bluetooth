@@ -55,6 +55,35 @@ body, html {
   font-size: 300%;
 }
 
+.h1, .h2, .h3, .h4, .h5, .h6, h1, h2, h3, h4, h5, h6 {
+    font-family: inherit;
+    font-weight: 500;
+    line-height: 1.1;
+    color: inherit;
+}
+
+.h1, .h2, .h3, h1, h2, h3 {
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+
+.h1, h1 {
+    font-size: 36px;
+}
+
+.h2, h2 {
+    font-size: 30px;
+}
+
+.h3, h3 {
+  font-size: 24px;
+}
+
+*{
+  box-sizing: border-box;
+}
+
+
 b {
   color: black;
 }
@@ -209,6 +238,11 @@ hr {
   border-bottom: solid 1px #fff7f7;
 }
 
+* {
+  font-family: 'Exo 2', sans-serif;
+  /* font-weight: 600; */
+}
+
 .result-time, .time-countdown, .time-final, .result-place {
   /* font-family: 'Exo 2', sans-serif; */
   font-style: italic;
@@ -245,7 +279,7 @@ hr {
 }
 
 .now-racing-section {
-  position:relative;
+  position: relative;
   top: 0px;
   transition: top 0.3s linear;
 }
@@ -275,22 +309,25 @@ hr {
 }
 
 .on-deck {
-  position:  relative;
+  position: relative;
   transform-origin: 0 0;
   transform: scale(0.6667);
   padding: 0;
   padding-bottom: 15px;
-  margin-top: 20px;
+  /* margin-top: 20px; */
   /*border: solid 10px #ddd;*/
   border: solid 1px black;
   box-shadow: 2px 2px 3px 1px rgba(0, 0, 0, 0.5);
   background: #ddd;
-
   top: 470px;
   transform: scale(0.9);
   transform-origin: 50% 0;
 }
 
+.onDeckSection{
+  padding-left:15px;
+  padding-right:15px;
+}
 
 .now-racing h1, .on-deck h1 {
   background: #37474f;
@@ -472,7 +509,6 @@ div.standing-time {
   color: #444;
 }
 
-
 .racing-next {
   position: fixed;
   z-index: 300;
@@ -604,7 +640,7 @@ div.standing-time {
   position: relative;
   top: -29px;
   line-height: 66px;
-  left: -15px;
+  /* left: -15px; */
   font-size: 51pt;
   /* text-align: left; */
   font-style: italic;

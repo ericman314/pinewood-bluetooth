@@ -9,6 +9,7 @@ import './css/HomeView.css'
 import update from 'immutability-helper'
 import moment from 'moment'
 import { useStateRef } from '../hooks/useStateRef'
+import noneCar from '../cars/none.jpg'
 
 
 export function Race(props) {
@@ -68,6 +69,61 @@ export function Race(props) {
       setArduinoReady(true)
     }
   }, [data.gate, status, tick, arduinoReady])
+
+  React.useEffect(() => {
+    trigger(0, data.lane1 / 1e6)
+  }, [data.lane1])
+
+  React.useEffect(() => {
+    trigger(1, data.lane2 / 1e6)
+  }, [data.lane2])
+
+  React.useEffect(() => {
+    trigger(2, data.lane3 / 1e6)
+  }, [data.lane3])
+
+  React.useEffect(() => {
+    trigger(3, data.lane4 / 1e6)
+  }, [data.lane4])
+
+
+  function trigger(lane, time) {
+    if (status === 'RACING') {
+      // TODO: Ignore event if not on the racing page
+
+      // Ignore event if lane is disabled
+      if (!lanes.includes(lane)) {
+        return console.log("Info: ignoring event trigger (lane disabled)")
+      }
+
+      console.log(lane, time)
+      // A car crossed the finish line.
+
+      // We are guaranteed not to receive more than one trigger per lane. UPDATE: NO!
+      // Oops, serious bug here! The arduino might give us more than one trigger now. So glad we tested for this!!!!!!
+      // Fixed via:  if ($cope.raceTImes[data.lane] === 0)
+
+      var place = standingsThisRace.length + 1
+
+      if (raceTimes[lane] === 0) {
+        setRaceTimes(update(raceTimes, { [lane]: { $set: time } }))
+
+        if (getRacing(lane)) {
+          saveResult(getRacing(lane), lane, time, place, new Date(gateReleaseTime))
+        }
+
+        setStandingsThisRace([...standingsThisRace, {
+          car: getRacing(lane),
+          place: place,
+          name: getRacingName(lane, { colorIfUnassigned: true }),
+          time: time,
+          deltaTime: standingsThisRace.length > 0 ? time - standingsThisRace[0].time : 0,
+          lane: lane
+        }])
+      }
+
+    }
+  }
 
   React.useEffect(() => {
     console.log(data.pinStateBin)
@@ -657,6 +713,26 @@ export function Race(props) {
     }
   };
 
+  function getRacingId(lane) {
+    var thing = getRacing(lane)
+    if (thing) {
+      return thing.carId
+    }
+    else {
+      return "none"
+    }
+  };
+
+  function getOnDeckId(lane) {
+    var thing = getOnDeck(lane)
+    if (thing) {
+      return thing.carId
+    }
+    else {
+      return "none"
+    }
+  };
+
   function broadcast() {
     console.warn('broadcast not implemented')
   }
@@ -725,7 +801,16 @@ export function Race(props) {
                     </div>}
 
 
-                  <div className="now-racing-section-image"><img className="{nowRacingImg:readyToRace}" ng-src="cars/{{getRacingId(lane)}}.jpg" /></div>
+                  <div className="now-racing-section-image">
+
+                    {getRacing(lane) ?
+                      <img className="{nowRacingImg:readyToRace}" src={`cars/${getRacing(lane).carId}.jpg`} />
+                      :
+                      <img className="{nowRacingImg:readyToRace}" src={noneCar} />
+                    }
+
+
+                  </div>
                 </div>
               }
             </div>
@@ -756,9 +841,13 @@ export function Race(props) {
           {allLanes.map(lane => (
             <Grid item xs={3}>
               {(getOnDeck(lane) || lanes.indexOf(lane) >= 0) &&
-                <div>
+                <div className='onDeckSection'>
                   <div className="name"><h2>{getOnDeckName(lane)}</h2></div>
-                  <div><img ng-src="cars/{{getOnDeckId(lane)}}.jpg" /></div>
+                {getOnDeck(lane) ?
+                  <img src={`cars/${getOnDeck(lane).carId}.jpg`} />
+                  :
+                  <img src={noneCar} />
+                }
 
                 </div>
               }

@@ -48,10 +48,11 @@ export function BluetoothProvider({ children }) {
       console.log('Retrieved service:')
       console.log(service)
 
-      const refCharLane1 = await service.getCharacteristic('ca3a80e1-c454-4fcb-b3cd-94070115afb2')
-      const refCharLane2 = await service.getCharacteristic('ca3a80e2-c454-4fcb-b3cd-94070115afb2')
-      const refCharLane3 = await service.getCharacteristic('ca3a80e3-c454-4fcb-b3cd-94070115afb2')
-      const refCharLane4 = await service.getCharacteristic('ca3a80e4-c454-4fcb-b3cd-94070115afb2')
+      // Lanes are reversed!!!
+      const refCharLane4 = await service.getCharacteristic('ca3a80e1-c454-4fcb-b3cd-94070115afb2')
+      const refCharLane3 = await service.getCharacteristic('ca3a80e2-c454-4fcb-b3cd-94070115afb2')
+      const refCharLane2 = await service.getCharacteristic('ca3a80e3-c454-4fcb-b3cd-94070115afb2')
+      const refCharLane1 = await service.getCharacteristic('ca3a80e4-c454-4fcb-b3cd-94070115afb2')
       const refCharStatus = await service.getCharacteristic('ca3a80e5-c454-4fcb-b3cd-94070115afb2')
       const refCharPinState = await service.getCharacteristic('ca3a80e6-c454-4fcb-b3cd-94070115afb2')
       const refCharFps = await service.getCharacteristic('ca3a80e7-c454-4fcb-b3cd-94070115afb2')
@@ -123,7 +124,9 @@ export function BluetoothProvider({ children }) {
 
   // Begin at index 1
   const lanes = [lane1, lane2, lane3, lane4]
-  const pinStates = [pinStateBin & 0x01, pinStateBin & 0x02, pinStateBin & 0x04, pinStateBin & 0x08]
+
+  // Lanes are reversed!!!
+  const pinStates = [pinStateBin & 0x08, pinStateBin & 0x04, pinStateBin & 0x02, pinStateBin & 0x01]
   const gate = status ? 'DOWN' : 'UP'
 
   return <context.Provider
