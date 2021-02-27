@@ -7,7 +7,7 @@ export { primaryKeys }
 
 /**
  * Provides automatically updating data models.
- * @param {Object} endpoint An object contained in the `api` namespace.
+ * @param {object} endpoint An object contained in the `api` namespace.
  */
 export function useModel(endpoint) {
 
@@ -21,7 +21,7 @@ export function useModel(endpoint) {
   }
 
   if (!endpoint.execute) {
-    throw new TypeError('You must provide an endpoint from the `api` namespace.')
+    throw new TypeError('You must provide an object from the `api` namespace.')
   }
 
   if (!endpoint.table) {
@@ -73,6 +73,41 @@ export function useModel(endpoint) {
 }
 
 
+
+/**
+ * Provides automatically updating data models.
+ * @param {function} endpoint A factory function contained in the `api` namespace.
+ */
+export function useMutator(endpoint) {
+
+  // Use the context from the modelStore
+  const { state, dispatch } = React.useContext(modelStore)
+
+  if (typeof endpoint !== 'function') {
+    throw new TypeError('You must provide a factory function from the `api` namespace.')
+  }
+
+  return async (...args) => {
+    let constructedObject = endpoint(...args)
+    let response = await constructedObject.execute()
+    if (!response.update) {
+      throw new Error('No `update` property in response')
+    }
+    for (let updateItem of response.update) {
+
+
+      if (!updateItem.table) {
+        throw new Error('No `update.table` property in response')
+      }
+      if (updateItem.table !== constructedObject.update) {
+        throw new Error(`\`response.update[].table\` and \`endpoint().update\` do not match: '${updateItem.table} !== ${constructedObject.update}`)
+      }
+      dispatch({ type: 'updateModel', table: constructedObject.update, data: updateItem.data, deleted: updateItem.deleted })
+    }
+    return response
+  }
+}
+
 /**
  * Provides api endpoints for retrieving or updating data.
  */
@@ -94,15 +129,18 @@ export const api = {
     }),
 
     update: (user) => ({
-      execute: () => fetchPost('/api/v4/user/update', user)
+      update: 'user',
+      execute: () => fetchPost('/api/v4/user/update', user),
     }),
 
     create: (user) => ({
-      execute: () => fetchPost('/api/v4/user/create', user)
+      update: 'user',
+      execute: () => fetchPost('/api/v4/user/create', user),
     }),
 
     delete: (userId) => ({
-      execute: () => fetchPost('/api/v4/user/delete', { userId })
+      update: 'user',
+      execute: () => fetchPost('/api/v4/user/delete', { userId }),
     })
   },
 
@@ -117,7 +155,19 @@ export const api = {
       params: { eventId },
       table: 'event',
       execute: () => fetchGet('/api/v4/event/get', { eventId })
-    })
+    }),
+
+    update: (event) => ({
+      execute: () => fetchPost('/api/v4/event/update', event)
+    }),
+
+    create: (event) => ({
+      execute: () => fetchPost('/api/v4/event/create', event)
+    }),
+
+    delete: (eventId) => ({
+      execute: () => fetchPost('/api/v4/event/delete', { eventId })
+    }),
   },
 
   cars: {
@@ -193,7 +243,15 @@ export const api = {
      * @param {Object} params - The updated order.
      */
     update: (params) => ({
-      execute: () => fetchPost('/api/v1/order/update', params)
+
+      /** Indicates that the api conforms to a specific contract which enables the model to be updated with the
+       * information contained in the response immediately, rather than waiting for the socket update to arrive. (Pass
+       * `true` to the execute function to perform the update automatically.)
+       * */
+      update: 'order',
+
+      /** execute is used to make the actual request. It should return a Promise. */
+      execute: () => fetchPost('/api/v1/order/update', params),
     }),
 
     /**
@@ -223,10 +281,12 @@ function addApiPaths(path, obj) {
       if (original().tryFilter && !original().filter) {
         throw new Error(`Endpoint ${newPath} has the tryFilter flag, but no filter function`)
       }
-      obj[key] = (...args) => ({ ...original(...args), apiPath: newPath })
+      obj[key] = (...args) => ({
+        ...original(...args),
+        apiPath: newPath
+      })
     } else {
       addApiPaths(newPath, obj[key])
     }
   }
 }
-

@@ -76,7 +76,7 @@ export async function fetchPost(url, data = {}, rootURL = null, headers = {}, ab
   }
 
   if (!response.ok) {
-    throw new FetchError(`Received status code ${response.status} from GET request to ${fullUrl}.`, null, response.status, fullUrl, 'post', data)
+    throw new FetchError(`Received status code ${response.status} from POST request to ${fullUrl}.`, null, response.status, fullUrl, 'post', data)
   }
 
   const responseText = await response.text()
@@ -85,7 +85,7 @@ export async function fetchPost(url, data = {}, rootURL = null, headers = {}, ab
   try {
     jsonResponse = JSON.parse(responseText)
   } catch (ex) {
-    throw new FetchError(`Unparseable response from GET request to ${fullUrl}. Response: ${responseText}`, responseText, response.status, fullUrl, 'post', data)
+    throw new FetchError(`Unparseable response from POST request to ${fullUrl}. Response: ${responseText}`, responseText, response.status, fullUrl, 'post', data)
   }
 
   if (jsonResponse.error) {

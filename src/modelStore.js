@@ -1,5 +1,5 @@
 // store.js
-import React, { createContext, useReducer } from 'react'
+import React from 'react'
 import update from 'immutability-helper'
 import socketIOClient from 'socket.io-client'
 import { fetchPost } from './fetchJson'
@@ -22,17 +22,17 @@ export const primaryKeys = {
 }
 
 const socketClientLocation = config.webRoot
-// const socket = socketIOClient(socketClientLocation)
-let socket
+const socket = socketIOClient(socketClientLocation)
+// let socket
 
 
 /** A React context for storing our model */
-const modelStore = createContext(initialModel)
+const modelStore = React.createContext(initialModel)
 const { Provider } = modelStore
 
 /** Provides the model store to the component tree */
 const ModelStoreProvider = ({ children }) => {
-  const [state, dispatch] = useReducer((state, action) => {
+  const [state, dispatch] = React.useReducer((state, action) => {
     switch (action.type) {
 
       case 'setSignatureStatus': {
@@ -225,7 +225,7 @@ const ModelStoreProvider = ({ children }) => {
 
         console.log('In modelStore, socket is connected, and subscribedTables has items:', state.subscribedTables)
 
-        let result = await fetchPost('/api/v1/auth_socket', { socket_id: socket.id, models: state.subscribedTables })
+        let result = await fetchPost('/api/v4/subscribe', { socketId: socket.id, models: state.subscribedTables })
         if (result.error) {
           console.error(result.error)
         }
@@ -258,20 +258,18 @@ const ModelStoreProvider = ({ children }) => {
 
   }, [state.subscribedTables, state.socketConnected])
 
-  function dispatchData(obj, deleted) {
-    console.log('dispatchData', obj, deleted)
+  function dispatchData(obj) {
 
-    for (let i in obj.data) {
-      let model = obj.data[i].model
+    for (let updateItem of obj) {
+      let model = updateItem.table
 
       // Update synchronization state
-      dispatch({ type: 'updateSocketSync', table: model, serverUpdateCount: obj.data[i].total_updates, timestamp: obj.data[i].timestamp })
-      dispatch({ type: 'updateModel', table: model, data: obj.data[i], deleted })
+      // dispatch({ type: 'updateSocketSync', table: model, serverUpdateCount: obj.data[i].total_updates, timestamp: obj.data[i].timestamp })
+      dispatch({ type: 'updateModel', table: model, data: updateItem.data, deleted: updateItem.deleted })
     }
   }
 
   React.useEffect(() => {
-    return
 
     console.log('Turning on socket listeners')
     socket.on('connect', async function () {
@@ -279,16 +277,10 @@ const ModelStoreProvider = ({ children }) => {
     })
 
     socket.on('update', function (obj) {
-      dispatchData(obj)
-    })
-    socket.on('create', function (obj) {
-      dispatchData(obj)
-    })
-    socket.on('delete', function (obj) {
-      dispatchData(obj, true)
+      dispatchData(obj, obj.deleted)
     })
     socket.on('disconnect', function (obj) {
-      console.log('SOCKET DISCONNECTED!')
+      dispatch({ type: 'socketDisconnect' })
     })
 
     return () => {

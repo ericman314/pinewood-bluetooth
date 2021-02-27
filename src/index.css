@@ -168,11 +168,12 @@ a {
 
 input[type=submit], a.button, .btn-primary:not(.dropdown-toggle) {
   background: #AD431F !important;
-  /*	padding: 8px;*/
+  	padding: 8px;
   color: #fff7f0;
   font-weight: 300;
   font-size: 110%;
   border: none !important;
+  border-radius: 4px;
 }
 
 .btn-primary {
@@ -239,7 +240,7 @@ hr {
 }
 
 * {
-  font-family: 'Exo 2', sans-serif;
+  font-family: 'Exo 2', sans-serif !important;
   /* font-weight: 600; */
 }
 

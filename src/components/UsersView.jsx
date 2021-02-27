@@ -4,11 +4,14 @@ import Visibility from '@material-ui/icons/Visibility'
 import VisibilityOff from '@material-ui/icons/VisibilityOff'
 import React from 'react'
 import { Link } from 'react-router-dom'
-import { api, useModel } from '../useModel'
+import { api, useModel, useMutator } from '../useModel'
 
 export function UsersView(props) {
 
   const users = useModel(api.users.all())
+  const updateUser = useMutator(api.users.update)
+  const createUser = useMutator(api.users.create)
+  const deleteUser = useMutator(api.users.delete)
 
   const [editDialogOpen, setEditDialogOpen] = React.useState(false)
   const [editingUser, setEditingUser] = React.useState(null)
@@ -37,7 +40,7 @@ export function UsersView(props) {
         delete editingUser.password
       }
       try {
-        await api.users.update(editingUser).execute()
+        await updateUser(editingUser)
       } catch (ex) {
         console.error(ex)
         setErrorMessage(ex.serverMessage ?? ex.message ?? ex.toString())
@@ -46,7 +49,7 @@ export function UsersView(props) {
       handleClose()
     } else {
       try {
-        await api.users.create(editingUser).execute()
+        await createUser(editingUser)
       } catch (ex) {
         console.error(ex)
         setErrorMessage(ex.serverMessage ?? ex.message ?? ex.toString())
@@ -57,7 +60,7 @@ export function UsersView(props) {
   }
 
   async function handleDelete() {
-    await api.users.delete(editingUser.userId).execute()
+    await deleteUser(editingUser.userId)
     handleClose()
   }
 
@@ -118,7 +121,7 @@ export function UsersView(props) {
           <FormControlLabel
             control={
               <Checkbox
-                checked={editingUser?.admin ?? false}
+                checked={!!editingUser?.admin}
                 onChange={evt => handleEditChange('admin', evt.target.checked ? 1 : 0)}
                 name="admin"
                 color="primary"
