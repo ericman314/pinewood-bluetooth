@@ -1,11 +1,14 @@
 import React from 'react'
 import { Button, Checkbox, Dialog, DialogActions, DialogTitle, FormControlLabel, TextField } from '@material-ui/core'
-import { api } from '../useModel'
+import { api, useMutator } from '../useModel'
 
 export function EventDetailsDialog({ open, onClose, event }) {
 
   const [editingEvent, setEditingEvent] = React.useState(null)
   const [errorMessage, setErrorMessage] = React.useState('')
+
+  const createEvent = useMutator(api.events.create)
+  const updateEvent = useMutator(api.events.update)
 
   React.useEffect(() => {
     if (open) {
@@ -21,7 +24,7 @@ export function EventDetailsDialog({ open, onClose, event }) {
   async function handleSave() {
     if (editingEvent.userId != null) {
       try {
-        await api.events.update(editingEvent).execute()
+        await updateEvent(editingEvent)
       } catch (ex) {
         console.error(ex)
         setErrorMessage(ex.serverMessage ?? ex.message ?? ex.toString())
@@ -30,7 +33,7 @@ export function EventDetailsDialog({ open, onClose, event }) {
       onClose()
     } else {
       try {
-        await api.events.create(editingEvent).execute()
+        await createEvent(editingEvent)
       } catch (ex) {
         console.error(ex)
         setErrorMessage(ex.serverMessage ?? ex.message ?? ex.toString())

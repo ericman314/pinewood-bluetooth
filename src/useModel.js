@@ -158,14 +158,17 @@ export const api = {
     }),
 
     update: (event) => ({
+      update: 'event',
       execute: () => fetchPost('/api/v4/event/update', event)
     }),
 
     create: (event) => ({
+      update: 'event',
       execute: () => fetchPost('/api/v4/event/create', event)
     }),
 
     delete: (eventId) => ({
+      update: 'event',
       execute: () => fetchPost('/api/v4/event/delete', { eventId })
     }),
   },

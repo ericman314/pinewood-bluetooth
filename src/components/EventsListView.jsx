@@ -3,10 +3,12 @@ import { Link } from 'react-router-dom'
 import { Button } from '@material-ui/core'
 import { api, useModel } from '../useModel'
 import { EventDetailsDialog } from './EventDetailsDialog'
+import moment from 'moment'
 
 export function EventsListView(props) {
 
   const events = useModel(api.events.all())
+  if (events) events.sort((a, b) => -moment(a.eventDate).valueOf() + moment(b.eventDate).valueOf())
   
   const [newEventDialogOpen, setNewEventDialogOpen] = React.useState(false)
 
