@@ -56,33 +56,32 @@ body, html {
 }
 
 .h1, .h2, .h3, .h4, .h5, .h6, h1, h2, h3, h4, h5, h6 {
-    font-family: inherit;
-    font-weight: 500;
-    line-height: 1.1;
-    color: inherit;
+  font-family: inherit;
+  font-weight: 500;
+  line-height: 1.1;
+  color: inherit;
 }
 
 .h1, .h2, .h3, h1, h2, h3 {
-    margin-top: 20px;
-    margin-bottom: 10px;
+  margin-top: 20px;
+  margin-bottom: 10px;
 }
 
 .h1, h1 {
-    font-size: 36px;
+  font-size: 36px;
 }
 
 .h2, h2 {
-    font-size: 30px;
+  font-size: 30px;
 }
 
 .h3, h3 {
   font-size: 24px;
 }
 
-*{
+* {
   box-sizing: border-box;
 }
-
 
 b {
   color: black;
@@ -157,6 +156,7 @@ a {
 }
 
 .link {
+  cursor: pointer;
   color: #a50;
   text-decoration: none;
 }
@@ -168,7 +168,7 @@ a {
 
 input[type=submit], a.button, .btn-primary:not(.dropdown-toggle) {
   background: #AD431F !important;
-  	padding: 8px;
+  padding: 8px;
   color: #fff7f0;
   font-weight: 300;
   font-size: 110%;
@@ -325,9 +325,9 @@ hr {
   transform-origin: 50% 0;
 }
 
-.onDeckSection{
-  padding-left:15px;
-  padding-right:15px;
+.onDeckSection {
+  padding-left: 15px;
+  padding-right: 15px;
 }
 
 .now-racing h1, .on-deck h1 {
@@ -742,4 +742,12 @@ div.standing-time {
 
 .dialog-actions-centered {
   justify-content: center !important;
+}
+
+.AdvancedHeader {
+  display: inline-block;
+}
+
+.AdvancedContent     {
+  margin: 8px;
 }

@@ -69,7 +69,7 @@ function App() {
       </div>
       <Switch>
         <Route path='/event-details/:eventId'>
-          <EventDetailsViewWrapper />
+          <EventDetailsView />
         </Route>
         <Route path='/events-list'>
           <EventsListView />

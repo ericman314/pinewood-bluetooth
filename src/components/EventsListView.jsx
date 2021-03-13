@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import { Button } from '@material-ui/core'
+import { Button, List, ListItem } from '@material-ui/core'
 import { api, useModel } from '../useModel'
 import { EventDetailsDialog } from './EventDetailsDialog'
 import moment from 'moment'
@@ -25,11 +25,18 @@ export function EventsListView(props) {
 
 
       <br /><br />
+      <List component='nav' style={{ maxWidth: 400 }} >
       {events?.map(event => (
-        <p key={event.eventId}>
-          <Link to={`/event-details/${event.eventId}`}>{event.eventName} &mdash; {event.eventDate}</Link>
-        </p>
+        <Link to={`/event-details/${event.eventId}`}>
+          <ListItem button key={event.eventId} divider>
+            <div>
+              <h3 style={{ marginTop: 4 }}>{event.eventName}</h3>
+              {moment(event.eventDate).format('YYYY-MM-DD')}
+            </div>
+          </ListItem>
+        </Link>
       ))}
+      </List>
 
       <EventDetailsDialog open={newEventDialogOpen} onClose={handleClose} event={null} />
 

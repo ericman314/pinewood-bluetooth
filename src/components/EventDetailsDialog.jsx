@@ -1,6 +1,7 @@
 import React from 'react'
 import { Button, Checkbox, Dialog, DialogActions, DialogTitle, FormControlLabel, TextField } from '@material-ui/core'
 import { api, useMutator } from '../useModel'
+import { useHistory } from 'react-router-dom'
 
 export function EventDetailsDialog({ open, onClose, event }) {
 
@@ -10,9 +11,15 @@ export function EventDetailsDialog({ open, onClose, event }) {
   const createEvent = useMutator(api.events.create)
   const updateEvent = useMutator(api.events.update)
 
+  const history = useHistory()
+
   React.useEffect(() => {
     if (open) {
-      setEditingEvent(event)
+      if (event) {
+        setEditingEvent({ ...event, eventDate: event.eventDate.substring(0, 10) })
+      } else {
+        setEditingEvent(null)
+      }
       setErrorMessage('')
     }
   }, [open])
@@ -22,7 +29,7 @@ export function EventDetailsDialog({ open, onClose, event }) {
   }
 
   async function handleSave() {
-    if (editingEvent.userId != null) {
+    if (editingEvent.eventId != null) {
       try {
         await updateEvent(editingEvent)
       } catch (ex) {
@@ -33,7 +40,9 @@ export function EventDetailsDialog({ open, onClose, event }) {
       onClose()
     } else {
       try {
-        await createEvent(editingEvent)
+        let response = await createEvent(editingEvent)
+        let insertedId = response.update[0].data[0].eventId
+        history.push(`/event-details/${insertedId}`)
       } catch (ex) {
         console.error(ex)
         setErrorMessage(ex.serverMessage ?? ex.message ?? ex.toString())

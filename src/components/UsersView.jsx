@@ -1,4 +1,4 @@
-import { Button, Checkbox, Dialog, DialogActions, FormControl, FormControlLabel, IconButton, InputAdornment, InputLabel, OutlinedInput, TextField, Typography } from '@material-ui/core'
+import { Button, Checkbox, Dialog, DialogActions, FormControl, FormControlLabel, IconButton, InputAdornment, InputLabel, List, ListItem, OutlinedInput, TextField, Typography } from '@material-ui/core'
 
 import Visibility from '@material-ui/icons/Visibility'
 import VisibilityOff from '@material-ui/icons/VisibilityOff'
@@ -76,12 +76,16 @@ export function UsersView(props) {
       <Button variant='contained' color='primary' onClick={() => setEditDialogOpen(true)}>New User</Button>
 
       <br /><br />
+      <List component='nav' style={{ maxWidth: 400 }} >
       {users?.map(user => (
+        <ListItem button key={user.id} divider>
         <p key={user.id} onClick={() => handleUserClick(user)}>
           {user.admin ? <b>{user.username}</b> : user.username
           }
         </p>
+        </ListItem>
       ))}
+      </List>
 
       <Dialog open={editDialogOpen} onClose={handleClose}>
         <div className='loginControlTextField'>
