@@ -748,6 +748,13 @@ div.standing-time {
   display: inline-block;
 }
 
-.AdvancedContent     {
+.AdvancedContent {
   margin: 8px;
+}
+
+.inputfile  {
+    display: none;
+}
+
+.inputFileLabel{
 }

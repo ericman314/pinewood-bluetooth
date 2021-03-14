@@ -15,6 +15,7 @@ import { makeStyles } from '@material-ui/core'
 import { UsersView } from './UsersView'
 import { Race } from './Race'
 import { RaceModelLoader } from './RaceModelLoader'
+import { CarDetailsView } from './CarDetailsView'
 
 const useStyles = makeStyles((theme) => ({
   button: {
@@ -68,6 +69,9 @@ function App() {
         </Link>
       </div>
       <Switch>
+        <Route path='/event-details/:eventId/car/:carId'>
+          <CarDetailsView />
+        </Route>
         <Route path='/event-details/:eventId'>
           <EventDetailsView />
         </Route>

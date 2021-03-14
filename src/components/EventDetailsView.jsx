@@ -2,6 +2,7 @@ import React from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { api, useModel } from '../useModel'
 import { EventDetailsDialog } from './EventDetailsDialog'
+import { EditCarDialog } from './EditCarDialog'
 import moment from 'moment'
 
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore'
@@ -19,6 +20,7 @@ export function EventDetailsView({ }) {
   const results = useModel(api.results.getByEventId(eventId))
   
   const [editEventDialogOpen, setEditEventDialogOpen] = React.useState(false)
+  const [editCarDialogOpen, setEditCarDialogOpen] = React.useState(false)
   const [deleteEventDialogOpen, setDeleteEventDialogOpen] = React.useState(false)
   const [deleteAllResultsDialogOpen, setDeleteAllResultsDialogOpen] = React.useState(false)
 
@@ -117,10 +119,10 @@ export function EventDetailsView({ }) {
       
         <EventDetailsDialog open={editEventDialogOpen} onClose={() => setEditEventDialogOpen(false)} event={event} />
         <DeleteEventDialog open={deleteEventDialogOpen} onClose={() => setDeleteEventDialogOpen(false)} event={event} />
-       
-        
+        <EditCarDialog open={editCarDialogOpen} onClose={() => setEditCarDialogOpen(false)} event={event} car={null} />
+
         <h2>Cars ({cars.length})</h2>
-        <Button variant='contained' color='primary' onClick={handleAddCar}>Add car</Button>
+        <Button variant='contained' color='primary' onClick={() => setEditCarDialogOpen(true)}>Add car</Button>
         <br /><br />
         {duplicateName && <p style={{ color: 'red', fontWeight: 'bold' }}>Duplicate name: {duplicateName}</p>}
 
@@ -129,12 +131,12 @@ export function EventDetailsView({ }) {
         {cars.map(car => (
 
           <div style={{ float: 'left', width: '320px', textAlign: 'center', marginBottom: '20px' }}>
-            <a ui-sref="car-details({carId:car.carId})">
-              <img ng-src="cars/{{car.carId}}.jpg" style={{ width: '95%' }} />
+            <Link to={`/event-details/${eventId}/car/${car.carId}`}>
+              <img src={`/cars/${car.carId}.jpg?v=${car.imageVersion}`} style={{ width: '95%' }} />
               <br />
               <p style={{ fontSize: '22pt', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{car.carName}</p>
-              <p style={{ fontSize: '14pt', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}><i>{car.nickname ?? '&nbsp;'}</i></p>
-            </a>
+              <p style={{ fontSize: '14pt', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}><i>{car.nickname ?? <span>&nbsp;</span>}</i></p>
+            </Link>
           </div>
         ))}
 

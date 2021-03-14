@@ -182,8 +182,19 @@ export const api = {
     }),
 
     update: (car) => ({
-      execute: () => fetchGet('/api/v4/car/update', { car })
-    })
+      update: 'car',
+      execute: () => fetchPost('/api/v4/car/update', car)
+    }),
+
+    create: (car) => ({
+      update: 'car',
+      execute: () => fetchPost('/api/v4/car/create', car)
+    }),
+
+    delete: (carId) => ({
+      update: 'car',
+      execute: () => fetchPost('/api/v4/car/delete', { carId })
+    }),
   },
 
   results: {
