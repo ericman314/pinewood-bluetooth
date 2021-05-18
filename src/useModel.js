@@ -14,7 +14,7 @@ export function useModel(endpoint) {
   // Use the context from the modelStore
   const { state, dispatch } = React.useContext(modelStore)
 
-  console.log(state)
+  // console.log(state)
 
   if (!state || !dispatch) {
     throw new Error('There must be an enclosing ModelStoreProvider to use useModel.')
@@ -45,15 +45,15 @@ export function useModel(endpoint) {
   }
 
   let signature = endpoint.apiPath + JSON.stringify(endpoint.params)
-  console.log(`useModel(${signature}), status is ${state.signatureStatus[signature]}`)
+  // console.log(`useModel(${signature}), status is ${state.signatureStatus[signature]}`)
 
   if (state.signatureStatus[signature] === 'complete') {
     // Use the filter function to return the appropriate data
     if (endpoint.filter) {
-      console.log('Applying filter to ', state.model[endpoint.table])
+      // console.log('Applying filter to ', state.model[endpoint.table])
       let filtered = endpoint.filter(state.model[endpoint.table])
-      console.log(endpoint.filter)
-      console.log('Result is ', filtered)
+      // console.log(endpoint.filter)
+      // console.log('Result is ', filtered)
       return endpoint.filter(state.model[endpoint.table])
     } else {
       return state.model[endpoint.table].slice()
@@ -178,7 +178,14 @@ export const api = {
       params: { eventId },
       table: 'car',
       execute: () => fetchGet('/api/v4/car/getByEventId', { eventId }),
-      filter: (cars) => { console.log(eventId, cars); return cars.filter(car => { console.log(+eventId); console.log(car); return car.eventId === eventId }) }
+      filter: (cars) => {
+        // console.log(eventId, cars)
+        return cars.filter(car => {
+          // console.log(+eventId)
+          // console.log(car)
+          return car.eventId === eventId
+        })
+      }
     }),
 
     update: (car) => ({

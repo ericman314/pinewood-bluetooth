@@ -83,8 +83,8 @@ function App() {
         </Route>
         <Route path='/race/:eventId'>
           <RaceModelLoader>
-            {({ cars }) =>
-              <Race cars={cars} />
+            {({ cars, event, results }) =>
+              <Race cars={cars} event={event} results={results} />
             }
           </RaceModelLoader>
         </Route>

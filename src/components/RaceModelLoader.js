@@ -4,12 +4,24 @@ import { api, useModel } from '../useModel'
 
 export function RaceModelLoader({ children }) {
   const params = useParams()
+  const eventId = parseInt(params.eventId)
+
   if (typeof children !== 'function') {
     throw new Error('RaceModelLoader\'s child must be a function')
   }
-  return children({
-    cars: useModel(api.cars.getByEventId(params.eventId)),
-    event: useModel(api.events.getById(params.eventId)),
-    results: useModel(api.results.getByEventId(params.eventId))
+
+  const cars = useModel(api.cars.getByEventId(eventId))
+  const event = useModel(api.events.getById(eventId))
+  const results = useModel(api.results.getByEventId(eventId))
+
+  if (cars && event && results) {
+ return children({
+   cars,
+   event,
+   results,
   })
+  }
+  else {
+    return null
+  }
 }

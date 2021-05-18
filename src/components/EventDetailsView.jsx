@@ -1,5 +1,5 @@
 import React from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useHistory, useParams } from 'react-router-dom'
 import { api, useModel } from '../useModel'
 import { EventDetailsDialog } from './EventDetailsDialog'
 import { EditCarDialog } from './EditCarDialog'
@@ -12,6 +12,7 @@ import { DeleteEventDialog } from './DeleteEventDialog'
 export function EventDetailsView({ }) {
 
   const params = useParams()
+  const history = useHistory()
   const eventId = parseInt(params.eventId)
   const events = useModel(api.events.all())
   const event = events?.find(e => e.eventId === eventId)
@@ -55,7 +56,8 @@ export function EventDetailsView({ }) {
   }
 
   function handleStartRace() {
-    alert('handleStartRace')
+    history.push(`/race/${eventId}`)
+    // alert('handleStartRace')
   }
 
   function handleGotoWelcome() {
