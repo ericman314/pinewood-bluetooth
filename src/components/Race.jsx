@@ -17,8 +17,21 @@ function useStateWithLabel(initialValue, name) {
   return [value, setValue]
 }
 
-export function Race({ cars, event, results }) {
-  console.log({ cars, event, results })
+/**
+ * Strategy for state management:
+ *
+ * All of the state will be contained in a reducer. The reducer actions will represent changes in the race state.
+ * Initialize the reducer with the cars, event, and results. We will update the cars and results locally in our reducer,
+ * while at the same time updating them on the server.
+ *
+ * I have yet to decide whether we will update the results imperatively at the same moment we dispatch the reducer
+ * actions, or in response to changes in our reducer state. That will depend on whether or not we can compute changes in
+ * state outside of the reducer.
+ */
+
+
+export function Race({ cars: _cars, event: _event, results: _results }) {
+  console.log({ cars: _cars, event: _event, results: _results })
 
   const { state, dispatch } = useAppState()
 
@@ -35,26 +48,76 @@ export function Race({ cars, event, results }) {
 
   const numberOfLanes = allLanes.length
 
-  /** Array of car id's currently racing */
-  // const [racingLane, setRacingLane] = useStateWithLabel([], 'racingLane')
-
-  /** Array of car id's currently on deck */
-  // const [onDeckLane, setOnDeckLane] = useStateWithLabel([], 'onDeckLane')
-
-  // const [status, setStatus, refStatus] = useStateRef('READY')
-
-  // const [standingsThisRace, setStandingsThisRace] = useStateWithLabel([], 'standingsThisRace')
-  // const [standings, setStandings] = React.useState([])
-  // const [animateRacing, setAnimateRacing] = React.useState(false)
-  // const [animateOnDeckMoveUp, setAnimateOnDeckMoveUp] = React.useState(false)
-  // const [animateOnDeckAppear, setAnimateOnDeckAppear] = React.useState(false)
-  // const [raceTimes, setRaceTimes] = React.useState(lanes.map(() => 0))
-  // const [currentTime, setCurrentTime, refCurrentTime] = useStateRef(0)
-  // const [gateReleaseTime, setGateReleaseTime, refGateReleaseTime] = useStateRef(0)
-  // const [arduinoReady, setArduinoReady, refArduinoReady] = useStateRef(false)
-  // const [weAreReady, setWeAreReady, refWeAreReady] = useStateRef(false)
-  // const [achievementsThisRace, setAchievementsThisRace] = React.useState([])
   const refHandleTick = React.useRef(null)
+  /*
+* cars: _cars, // initialized from the cars data model, it will be updated regularly
+* event: _event, // initialized from the event data model. Not likely to be updated very often
+* results: _results, // initialized from the result data model. It will be updated regularly.
+* racingLane: [], // carId's of the cars currently racing
+* onDeckLane: [], // carId's of the cars on deck
+* status: 'READY', // controls what information is visible on the screen, and how we respond to triggers from the arduino
+* standingsThisRace: [], // stores information about the results of the current race: which cars finished when, etc
+* standings: [], // used to display standings of the entire event after each race
+* animateRacing: false, // used to animate
+* animateOnDeckMoveUp: false, // used to animate
+* animateOnDeckAppear: false, // used to animate
+* raceTimes: lanes.map(() => 0), // stores times from the current race (seems redundant with standingsThisRace)
+* currentTime: 0, // the current time, used to display the time on the screen during the race
+* gateReleaseTime: 0, // the time the gate was released
+* arduinoReady: false, // the state of the arduino. Starts as false so that the race does not begin as soon as the component mounts if the gate is still down.
+* weAreReady: false, // whether enough time has elapsed after the last race so that we are ready for the next one
+* achievementsThisRace: [], // used to display achievements on the screen after each race
+*/
+
+/*
+  * RACE PROCEDURE
+  *
+  * When the component mounts, cars, event, and results will be initialized from the data models. The status is
+  * initialized to 'READY'.
+  *
+  * On first render, an effect runs to initialize state variables with their starting values. The effect also dispatches
+  * 'moveToNextRun' twice. This fills racingLane and onDeckLane with ids of the cars. The action depends on having
+  * up-to-date results for each car--this fact will be important later.
+  *
+  * When the gate is released, an effect runs which starts the video recording. It also dispatches 'startRace'--this
+  * action changes the status to 'RACING', sets gateReleaseTime, and sets arduinoReady and weAreReady to false.
+  *
+  * When a car crosses the finish line, an effect runs which dispatches the 'trigger' action. This action sets
+  * raceTime[action.lane] and pushes an item in standingsThisRace. TODO: Should this also update the results? Yes, I
+  * believe so. Updating the results during the trigger action will ensure that all results are available once the race
+  * has ended--for as you will see below, the race is not stopped until all results have been recorded in
+  * standingsThisRace. Although results may be redundant with standingsThisRace, for legacy reasons we will keep it, but
+  * it should be updated at the same time.
+  *
+  * On an interval, the 'setCurrentTime' action is dispatched. This sets the currentTime, which in turn causes an effect
+  * to run. ...
+  *
+  * Current implementation: ...In the currentTime effect, if six seconds have elapsed since the gate release time, or
+  * there are four items in standingsThisRace (meaning each car has finished), the race is stopped.
+  *
+  * Proposed change: ...In the currentTime effect, if six seconds have elapsed since the gate release time, the
+  * 'assignDnf' action is dispatched to assign a time of 10 in results, raceTimes, and standingsThisRace for cars that
+  * did not finish. The race is not stopped yet. Also in the currentTime effect, once standingsThisRace contains four
+  * items, the 'awardAchievements' action is then dispatched. The race is still not stopped yet. Then, on the next tick,
+  * and only after the state has been updated with the DNF results and achievements, the race is stopped. This ensures
+  * that the current state will contain all of the results and achievements when we make web requests to save
+  * everything.
+  *
+  * When the race is stopped, the video stops recording and the instant replay is shown. Results and achievements
+  * are saved on the server. 'stopRace' is then dispatched, which sets the status to 'ENDED'. Two more actions are dispatched
+  * after a delay. 'addStanding' is dispatched in intervals to create an animation effect, and 'setWeAreReady' is
+  * dispatched after eight seconds, setting weAreReady to true.
+  *
+  * When the gate is reset, an action is dispatched to set arduinoReady to true.
+  *
+  * During the currentTime effect, we also check if the race has ended and arduinoReady and weAreReady are true. If so,
+  * we reset the video and dispatch three actions: 'readyForStart1' and 'moveToNextRun' immediately, and
+  * 'readyForStart2' after a delay. You already know what 'moveToNextRun' does, and that it relies on up-to-date
+  * results. The other two actions reset the status to 'READY', reset the standings, and update animation state.
+  *
+  *
+  */
+
 
   const [raceState, raceDispatch] = useReducer((state, action) => {
     switch (action.type) {
@@ -89,7 +152,7 @@ export function Race({ cars, event, results }) {
           // Calculate a score for each car on this lane
           let bestScore = null, bestCar = null
 
-          for (const car of cars) {
+          for (const car of state.cars) {
             let results = getResultsByCar(car)
             let score = 0
             let isCarCurrentlyRacing = racingLaneNew.includes(car.carId)
@@ -101,7 +164,7 @@ export function Race({ cars, event, results }) {
             }
 
             // Has this car run enough times yet, including the currently scheduled race?
-            if (results.filter(e => e).length + (isCarCurrentlyRacing ? 1 : 0) >= event.multiplier) {
+            if (results.filter(e => e).length + (isCarCurrentlyRacing ? 1 : 0) >= _event.multiplier) {
               score += 1e12
             }
 
@@ -188,6 +251,8 @@ export function Race({ cars, event, results }) {
           // TODO: Is it okay to refer to getRacing here?
           var place = state.standingsThisRace.length + 1
 
+          // TODO: Also update results here
+
           return update(state, {
             raceTimes: { [action.lane]: { $set: action.time } },
             standingsThisRace: {
@@ -218,7 +283,8 @@ export function Race({ cars, event, results }) {
           animateRacing: { $set: false },
           animateOnDeckMoveUp: { $set: false },
           animateOnDeckAppear: { $set: false },
-          raceTimes: { $set: allLanes.map(() => 0) }
+          raceTimes: { $set: allLanes.map(() => 0) },
+          achievementsThisRace: { $set: null }
         })
       }
 
@@ -232,20 +298,16 @@ export function Race({ cars, event, results }) {
         })
       }
 
-      /**
-       * stopRace: Ends the race and sets appropriate state
-       */
-      case 'stopRace': {
-
+      case 'assignDnf': {
         const stateUpdateObject = {
-          status: { $set: 'ENDED' },
           standingsThisRace: { $push: [] },
-          raceTimes: {}
+          raceTimes: {},
         }
 
         // TODO: Make this suitable for a pure function
         // Loop through each lane. If the lane has a car assigned to it, and the raceTime is 0, it means the car didn't finish. Give it a time of 10 seconds to represent DNF
 
+        // TODO: Also update results
         // Each DNF car will have the same place
         var place = state.standingsThisRace.length + 1
 
@@ -267,85 +329,7 @@ export function Race({ cars, event, results }) {
             })
           }
         })
-
-
-
-
         return update(state, stateUpdateObject)
-
-
-        // Prepend new result
-        /* [array]
-         *  |
-         *  +--date
-         *  +--[lane]
-         *      |
-         *      +--car
-         *      +--result
-         */
-
-
-
-
-
-
-      }
-
-      /**
-       * setWeAreReady: Indicates that we are ready for the next race.
-       */
-      case 'setWeAreReady': {
-        return update(state, {
-          weAreReady: { $set: true }
-        })
-      }
-
-      /**
-       * addStanding: And an entry to the standings list. By calling this repeatedly, an animation can be effected.
-       */
-      case 'addStanding': {
-        if (state.status === 'ENDED') {
-          // Only add a standing if the race is still ended
-          return update(state, {
-            standingsThisRace: { $push: [action.standing] }
-          })
-        } else {
-          // If the gate has already been reset, do not add the standing
-          return state
-        }
-      }
-
-      /**
-       * readyForStart1: Begin an animation, and reset standings
-       */
-      case 'readyForStart1': {
-        return update(state, {
-          status: { $set: 'READY' },
-          animateRacing: { $set: false },
-          animateOnDeckMoveUp: { $set: false },
-          animateOnDeckAppear: { $set: true },
-          standingsThisRace: { $set: [] },
-          standings: { $set: [] }
-        })
-      }
-
-      /**
-       * readyForStart2: End the animation, and reset race times
-       */
-      case 'readyForStart2': {
-        return update(state, {
-          animateOnDeckAppear: { $set: false },
-          raceTimes: { $set: allLanes.map(() => 0) }
-        })
-      }
-
-      /**
-       * setCurrentTime: Set the current race time displayed on the screen
-       */
-      case 'setCurrentTime': {
-        return update(state, {
-          currentTime: { $set: action.time }
-        })
       }
 
       case 'awardAchievements': {
@@ -360,6 +344,7 @@ export function Race({ cars, event, results }) {
         lanes.forEach(lane => {
           var ach = []
 
+          // TODO: I would prefer to do this without using the 'car' intermediate object
           var car = getRacing(lane)
           if (!car) {
             // No car assigned to this lane
@@ -374,7 +359,7 @@ export function Race({ cars, event, results }) {
           }
 
           // Was this race this car's last?
-          var isLastRace = results.length === event.multiplier
+          var isLastRace = results.length === _event.multiplier
 
           // Transcendent car: Have a time of 2.718xxx (e): Will almost never happen
           if (result.time.toFixed(6).startsWith('2.718')) {
@@ -527,29 +512,113 @@ export function Race({ cars, event, results }) {
         })
       }
 
+
+      /**
+       * stopRace: Ends the race
+       */
+      case 'stopRace': {
+        const stateUpdateObject = {
+          status: { $set: 'ENDED' },
+        }
+        return update(state, stateUpdateObject)
+      }
+
+      /**
+       * setWeAreReady: Indicates that we are ready for the next race.
+       */
+      case 'setWeAreReady': {
+        return update(state, {
+          weAreReady: { $set: true }
+        })
+      }
+
+      /**
+       * addStanding: And an entry to the standings list. By calling this repeatedly, an animation can be effected.
+       */
+      case 'addStanding': {
+        if (state.status === 'ENDED') {
+          // Only add a standing if the race is still ended
+          return update(state, {
+            standingsThisRace: { $push: [action.standing] }
+          })
+        } else {
+          // If the gate has already been reset, do not add the standing
+          return state
+        }
+      }
+
+      /**
+       * readyForStart1: Begin an animation, and reset standings
+       */
+      case 'readyForStart1': {
+        return update(state, {
+          status: { $set: 'READY' },
+          animateRacing: { $set: false },
+          animateOnDeckMoveUp: { $set: false },
+          animateOnDeckAppear: { $set: true },
+          standingsThisRace: { $set: [] },
+          standings: { $set: [] },
+          achievementsThisRace: { $set: null }
+        })
+      }
+
+      /**
+       * readyForStart2: End the animation, and reset race times
+       */
+      case 'readyForStart2': {
+        return update(state, {
+          animateOnDeckAppear: { $set: false },
+          raceTimes: { $set: allLanes.map(() => 0) }
+        })
+      }
+
+      /**
+       * setCurrentTime: Set the current race time displayed on the screen
+       */
+      case 'setCurrentTime': {
+        return update(state, {
+          currentTime: { $set: action.time }
+        })
+      }
+
       default: throw new Error('Unrecognized action: ' + action.type)
 
     }
 
   }, {
+      cars: _cars, // initialized from the cars data model, it will be updated regularly
+      event: _event, // initialized from the event data model. Not likely to be updated very often
+      results: _results, // initialized from the result data model. It will be updated regularly.
     racingLane: [], // carId's of the cars currently racing
-    onDeckLane: [],
-    status: 'READY',
-    standingsThisRace: [],
-    standings: [],
-    animateRacing: false,
-    animateOnDeckMoveUp: false,
-    animateOnDeckAppear: false,
-    raceTimes: lanes.map(() => 0),
-    currentTime: 0,
-    gateReleaseTime: 0,
-    arduinoReady: false,
-    weAreReady: false,
-    achievementsThisRace: []
+      onDeckLane: [], // carId's of the cars on deck
+      status: 'READY', // controls what information is visible on the screen, and how we respond to triggers from the arduino
+      standingsThisRace: [], // stores information about the results of the current race: which cars finished when, etc
+      standings: [], // used to display standings of the entire event after each race
+      animateRacing: false, // used to animate
+      animateOnDeckMoveUp: false, // used to animate
+      animateOnDeckAppear: false, // used to animate
+      raceTimes: lanes.map(() => 0), // stores times from the current race (seems redundant with standingsThisRace)
+      currentTime: 0, // the current time, used to display the time on the screen during the race
+      gateReleaseTime: 0, // the time the gate was released
+      arduinoReady: false, // the state of the arduino
+      weAreReady: false, // whether enough time has elapsed after the last race so that we are ready for the next one
+      achievementsThisRace: null, // used to display achievements on the screen after each race. Also acts as the signal that we are ready to stop the race and save the results.
   })
 
   React.useEffect(() => {
-    gotoRace()
+    console.log('initialize')
+
+    // It takes two loops through moveToNextRun to get the cars into the racing position.
+    for (var iter = 0; iter < 2; iter++) {
+      // Do not move cars if any are already in racing position.
+      raceDispatch({ type: 'moveToNextRun', noOverride: true })
+    }
+
+    broadcast('initializeInstantReplayStream')
+
+    // Reset everything
+    raceDispatch({ type: 'initialize' })
+
   }, [])
 
   React.useEffect(() => {
@@ -611,26 +680,6 @@ export function Race({ cars, event, results }) {
     console.log(data.pinStateBin)
   }, [data.pinStateBin])
 
-  function gotoRace() {
-    console.log('gotoRace')
-
-    // It takes two loops through moveToNextRun to get the cars into the racing position.
-    for (var iter = 0; iter < 2; iter++) {
-      // Do not move cars if any are already in racing position.
-      raceDispatch({ type: 'moveToNextRun', noOverride: true })
-    }
-
-
-    broadcast('initializeInstantReplayStream')
-
-    // Reset everything
-    raceDispatch({ type: 'initialize' })
-
-
-    // Transition to child state 
-    // $state.go('event-details.race')
-  }
-
   function deferTemporarily(lane) {
     // Swap car racing and car on deck    
     raceDispatch({ type: 'deferTemporarily', lane })
@@ -661,11 +710,11 @@ export function Race({ cars, event, results }) {
    * @param {Car} car The car whose results to get
    * @returns {Result[]} The results of the specified car
    */
-  function getResultsByCar(car) {
+  function getResultsByCar(results, car) {
     return results.filter(r => r.carId === car.carId)
   }
 
-  function getRacing(lane) {
+  function getRacing(cars, lane) {
     return cars.find(car => car.carId === raceState.racingLane[lane])
   }
 
@@ -691,7 +740,7 @@ export function Race({ cars, event, results }) {
     }
   }
 
-  function getOnDeck(lane) {
+  function getOnDeck(cars, lane) {
     return cars.find(car => car.carId === raceState.onDeckLane[lane])
   }
 
@@ -722,9 +771,23 @@ export function Race({ cars, event, results }) {
   React.useEffect(() => {
 
     if (raceState.status === 'RACING') {
-      if (raceState.currentTime - raceState.gateReleaseTime > 6000 || raceState.standingsThisRace.length === lanes.length) {
+
+      if (raceState.currentTime - raceState.gateReleaseTime > 6000) {
+        // Assign DNF results for all lanes which did not finish
+        raceDispatch({ type: 'assignDnf' })
+      }
+
+      // Ensure that all lanes have a result before achievements are awarded.
+      if (raceState.standingsThisRace.length === lanes.length) {
+        // All lanes have a result, so we can now award achievements.
+        raceDispatch({ type: 'awardAchievements' })
+      }
+
+      // Ensure that all achievements have been awarded before stopping the race.
+      if (raceState.achievementsThisRace) {
         stopRace()
       }
+
     }
 
     if (raceState.status === 'ENDED') {
@@ -737,10 +800,11 @@ export function Race({ cars, event, results }) {
   }, [raceState.currentTime])
 
   function stopRace() {
-    // TODO: figure out how to ignore if not on the racing page
+
+    // TODO: Save results and achievements
 
     raceDispatch({ type: 'stopRace' })
-    raceDispatch({ type: 'awardAchievements' })
+
 
     // Compute and animate standings
     // Create array, then sort by bestTime:
@@ -753,13 +817,13 @@ export function Race({ cars, event, results }) {
      * ]
      */
 
-    var bestBestTime = 9999
-    var allTimes = []
-    for (var i = 0; i < cars.length; i++) {
-      var car = cars[i]
-      var results = getResultsByCar(car)
-      var bestTime = 9999
-      for (var j = 0; j < results.length; j++) {
+    let bestBestTime = 9999
+    let allTimes = []
+    for (var i = 0; i < _cars.length; i++) {
+      let car = _cars[i]
+      let results = getResultsByCar(_results, car)
+      let bestTime = 9999
+      for (let j = 0; j < results.length; j++) {
         if (results[j].time < bestTime) {
           bestTime = results[j].time
         }
@@ -778,7 +842,7 @@ export function Race({ cars, event, results }) {
 
     allTimes.sort(function (a, b) { return a.time - b.time })
 
-    for (var i = 0; i < allTimes.length; i++) {
+    for (let i = 0; i < allTimes.length; i++) {
       allTimes[i].place = i + 1
       allTimes[i].deltaTime = allTimes[i].time - bestBestTime
     }
@@ -834,7 +898,7 @@ export function Race({ cars, event, results }) {
       place: place,
       resultDate: moment(date).format("YYYY-MM-DD HH:mm:ss"),
       carId: car.carId,
-      eventId: event.id
+      eventId: _event.id
     }
 
 
@@ -924,32 +988,32 @@ export function Race({ cars, event, results }) {
 
                       {/*<div className="time-countdown" ng-show="status === 'READY' && raceTimes[lane] === 0">{{ 0 | number: 4}}</div> */}
 
-                    {(raceState.status === 'RACING' || raceState.status === 'ENDED') && raceState.raceTimes[lane] === 0 &&
-                      <div className={`time-countdown ${raceState.status === 'ENDED' ? 'time-countdown-fade' : ''}`}>
-                        {formatTime((raceState.currentTime - raceState.gateReleaseTime) / 1000)}
+                      {(raceState.status === 'RACING' || raceState.status === 'ENDED') && raceState.raceTimes[lane] === 0 &&
+                        <div className={`time-countdown ${raceState.status === 'ENDED' ? 'time-countdown-fade' : ''}`}>
+                          {formatTime((raceState.currentTime - raceState.gateReleaseTime) / 1000)}
                         </div>
                       }
 
-                    {(raceState.status === 'RACING' || raceState.status === 'ENDED') && raceState.raceTimes[lane] !== 0 && raceState.raceTimes[lane] !== 10 &&
+                      {(raceState.status === 'RACING' || raceState.status === 'ENDED') && raceState.raceTimes[lane] !== 0 && raceState.raceTimes[lane] !== 10 &&
                         <div className={`time-final ${getPlace(lane) == 1 ? 'time-final-winner' : ''}`}>
-                      {formatTime(raceState.raceTimes[lane])}
+                          {formatTime(raceState.raceTimes[lane])}
                         </div>
                       }
 
                       {/* <div className="time-final" ng-show="status === 'ENDED'">{{ raceTimes[lane] | number : 4 | zeroFilter}}</div> */}
 
-                    {(raceState.status === 'RACING' || raceState.status === 'ENDED') && raceState.raceTimes[lane] !== 0 &&
+                      {(raceState.status === 'RACING' || raceState.status === 'ENDED') && raceState.raceTimes[lane] !== 0 &&
                         <div className='result-place-wrapper' p>
-                      <div className={`result-place ${getPlace(lane) != '' ? 'result-place-show' : ''}`}>{getPlace(lane)}</div>
+                          <div className={`result-place ${getPlace(lane) != '' ? 'result-place-show' : ''}`}>{getPlace(lane)}</div>
                         </div>}
 
 
                       <div className="now-racing-section-image">
 
                         {getRacing(lane) ?
-                        <img className={`${false ? 'readyToRace' : ''}`} src={`/cars/${getRacing(lane).carId}.jpg`} />
+                          <img className={`${false ? 'readyToRace' : ''}`} src={`/cars/${getRacing(lane).carId}.jpg`} />
                           :
-                        <img className={`${false ? 'readyToRace' : ''}`} src={noneCar} />
+                          <img className={`${false ? 'readyToRace' : ''}`} src={noneCar} />
                         }
 
 
@@ -987,7 +1051,7 @@ export function Race({ cars, event, results }) {
                   <div className='onDeckSection'>
                     <div className="name"><h2>{getOnDeckName(lane)}</h2></div>
                     {getOnDeck(lane) ?
-                    <img src={`/cars/${getOnDeck(lane).carId}.jpg`} />
+                      <img src={`/cars/${getOnDeck(lane).carId}.jpg`} />
                       :
                       <img src={noneCar} />
                     }
@@ -1011,7 +1075,7 @@ export function Race({ cars, event, results }) {
         {raceState.standings.length > 0 && raceState.status === 'ENDED' &&
           <div className="current-standings">
             {/* <h1>CURRENT STANDINGS</h1> --30 */}
-          {raceState.standings.map(standing => (
+            {raceState.standings.map(standing => (
               <>
                 <div className="standing-wrapper x-angular-animate">
                   <div className="standing-place">
